@@ -1,0 +1,4338 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Tracker – Planned &amp; Consumed Hours</title>
+  <style>
+    /* =======================
+       Estilos Originais
+       ======================= */
+    #comparisonPanelContent {
+      display: flex;
+      flex-direction: column;
+      height: 90%;
+      gap: 12px;
+    }
+    .comparison-row {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .comparison-row h4 {
+      margin: 0 0 8px 0;
+      font-size: 1.1em;
+      text-align: center;
+    }
+    #ecomComparisonChart,
+    #retailComparisonChart {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 88% !important;
+    }
+
+    #comparisonPanel {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 97vh;
+      background: #fff;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.17);
+      padding: 18px 38px 30px 38px;
+      overflow-y: auto;
+      z-index: 2000;
+    }
+    #closeComparisonPanel {
+      position: absolute;
+      top: 10px;
+      right: 18px;
+      font-size: 34px;
+      background: none;
+      border: none;
+      color: #c1121f;
+      cursor: pointer;
+      z-index: 3001;
+      line-height: 1;
+      padding: 2px 8px;
+      border-radius: 50%;
+      transition: background 0.15s;
+    }
+    #closeComparisonPanel:hover {
+      background: #f9d3d3;
+      box-shadow: 0 2px 7px #eee;
+    }
+    #dashboard.pdf-scale {
+      transform: scale(0.74);
+      transform-origin: top left;
+      width: 1438px !important;
+      min-width: unset !important;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f7f9;
+      color: #333;
+    }
+    #controlsAccordion summary {
+      list-style: none;
+      cursor: pointer;
+      font-weight: bold;
+      background: #004d99;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+    #controlsAccordion {
+      margin-top: -10px;
+    }
+    #controlsAccordion summary::-webkit-details-marker {
+      display: none;
+    }
+    #controlsAccordion summary::marker {
+      display: none;
+    }
+    #controlsAccordion summary::before {
+      content: "▼ ";
+    }
+    #controlsAccordion[open] summary {
+      background: #007acc;
+    }
+    #controlsAccordion > div#controls {
+      background: #f9f9f9;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+    }
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px;
+      padding: 4px 0;
+    }
+    #controls input[type="file"],
+    #controls input[type="date"],
+    #controls button {
+      font-size: 0.85rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+    }
+    #controls input[type="file"]::-webkit-file-upload-button {
+      padding: 4px 8px;
+      font-size: 0.85rem;
+      border: none;
+      background: #f0f0f0;
+    }
+    #controls input[type="date"] {
+      width: 100px;
+    }
+    #controls button:hover {
+      background-color: #eaeaea;
+    }
+    #controls input[type="file"] {
+  width: auto !important;
+  max-width: 75px;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  line-height: 1;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  box-shadow: none;
+}
+#controls input[type="file"]::-webkit-file-upload-button {
+  padding: 2px 4px;
+  font-size: 0.75rem;
+  line-height: 0.2;
+  border: none;
+  background: #f0f0f0;
+  margin: 0;
+  cursor: pointer;
+}
+    .top-bar {
+      background-color: #004d99;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      position: relative;
+    }
+    .bottom-right {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      color: #ddd;
+      font-size: 12px;
+    }
+    .highlight-number {
+      font-weight: bold;
+    }
+    #headcountCount {
+      font-size: 1em !important;
+    }
+    #totalConsumed,
+    #totalPlanned {
+      font-size: 1em !important;
+      font-weight: bold;
+      color: #c1121f;
+    }
+    #main-content {
+      padding: 10px;
+      margin-top: -10px;
+    }
+    #controls input[type="file"],
+    #controls button,
+    #budgetControls input,
+    #dateControls input {
+      padding: 8px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .filter-button {
+      background-color: #e0e0e0;
+      border: 1px solid #ccc;
+      color: #333;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .filter-button:hover {
+      background-color: #d0d0d0;
+    }
+    .filter-input {
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+   #controls input[type="file"] {
+  background: linear-gradient(45deg, #00bfae, #009688);
+  color: #fff;
+  min-width: 180px; /* largura mínima maior */
+  width: auto;      /* cresce com o conteúdo / container */
+}
+    #controls input[type="file"]::-webkit-file-upload-button {
+      background: linear-gradient(45deg, #00bfae, #009688);
+      color: #fff;
+      border: none;
+      padding: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #controls input[type="file"]::-webkit-file-upload-button:hover {
+      background: linear-gradient(45deg, #00a79d, #008b8b);
+    }
+    #controls button:hover {
+      background-color: #003366;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      background-color: #f1f1f1;
+      padding: 10px;
+      border-bottom: 2px solid #ddd;
+      gap: 5px;
+    }
+    .nav-tabs button {
+      background-color: #004d99;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 16px;
+      border-radius: 4px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .nav-tabs button.active {
+      background-color: #007acc;
+    }
+    .nav-tabs button:hover {
+      background-color: #005f99;
+    }
+    .tab-content {
+      display: none;
+      padding: 20px;
+      background-color: #fff;
+      border: none;
+      margin-top: 10px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    /* ─────────────────────────────────────────────
+   regra genérica para todas as células
+   ───────────────────────────────────────────*/
+th, td {
+  padding: 12px;
+  text-align: left;
+}
+
+/* ─────────────────────────────────────────────
+   corpo da #budgetTable mais compacto
+   ───────────────────────────────────────────*/
+#budgetTracker #budgetTable tbody td {
+  padding: 4px 6px;   /* vertical / horizontal  */
+  line-height: 0.8;
+}
+
+/* ─────────────────────────────────────────────
+   1ª linha do cabeçalho – continua no topo
+   ───────────────────────────────────────────*/
+#budgetTracker #budgetTable thead tr:first-child th {
+  position: sticky;     /* garante que fique fixa               */
+  top: 0;               /* encostada no topo da tabela/viewport */
+  z-index: 3;           /* acima da 2ª linha                    */
+
+  padding: 2px 6px;
+  line-height: 1;
+  font-size: 0.90rem;   /* se quiser outro tamanho, ajuste aqui */
+}
+
+/* ─────────────────────────────────────────────
+   2ª linha do cabeçalho – fixa logo abaixo
+   ───────────────────────────────────────────*/
+#budgetTracker #budgetTable thead tr:nth-child(2) th {
+  position: sticky;     /* também fixa                           */
+  top: 34px;            /* altura da 1ª linha  → ajuste se mudar */
+  z-index: 2;           /* um nível abaixo da 1ª                 */
+
+  padding: 2px 6px;
+  line-height: 1;
+  font-size: 0.80rem;   /* ou 0.90rem, conforme preferir         */
+}
+
+
+/* NOVO – só a 1ª célula (Task) de cada linha */
+#budgetTracker #budgetTable tbody td:first-child {
+  font-size: 0.90rem;   /* ou 0.8rem, 12px… ajuste à vontade */
+  white-space: nowrap;  /* opcional: evita quebra de linha   */
+}
+    th {
+      background-color: #004d99;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    tr:hover {
+      background-color: #d9d9d9;
+    }
+    #resultTable {
+      table-layout: fixed;
+      width: 100%;
+    }
+    #resultTable th,
+    #resultTable td {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 6px 8px;
+      font-size: 0.85rem;
+    }
+    #resultTable th:nth-child(1),
+    #resultTable td:nth-child(1) {
+      width: 150px;
+    }
+    #resultTable th:nth-child(2),
+    #resultTable td:nth-child(2) {
+      width: 100px;
+    }
+    #resultTable th:nth-child(3),
+    #resultTable td:nth-child(3) {
+      width: 80px;
+    }
+    #resultTable th:nth-child(4),
+    #resultTable td:nth-child(4) {
+      width: 100px;
+    }
+    #resultTable th:nth-child(5),
+    #resultTable td:nth-child(5) {
+      width: 60px;
+    }
+    #resultTable th:nth-child(6),
+    #resultTable td:nth-child(6) {
+      width: 80px;
+    }
+    #resultTable th:nth-child(7),
+    #resultTable td:nth-child(7) {
+      width: 180px;
+    }
+    #resultTable th:nth-child(8),
+    #resultTable td:nth-child(8) {
+      width: 60px;
+    }
+    #resultTable th:nth-child(9),
+    #resultTable td:nth-child(9) {
+      width: 150px;
+    }
+    #resultTable th:nth-child(10),
+    #resultTable td:nth-child(10) {
+      width: 80px;
+    }
+    #resultTable th:nth-child(11),
+    #resultTable td:nth-child(11) {
+      width: 105px;
+    }
+    #employeeFilter {
+      width: 95px;
+      padding: 4px;
+      font-size: 0.8rem;
+    }
+    #labourAccountFilter {
+      width: 60px;
+      padding: 4px;
+      font-size: 0.8rem;
+    }
+    #taskFilter {
+      width: 100px;
+      padding: 4px;
+      font-size: 0.8rem;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fefefe;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 300px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .modal-content input,
+    .modal-content select {
+      width: 80%;
+      padding: 5px;
+      margin: 5px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .modal-buttons button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .confirm-button {
+      background-color: #28a745;
+      color: white;
+    }
+    .cancel-button {
+      background-color: #dc3545;
+      color: white;
+    }
+    #controls, #budgetControls, #dateControls {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    #slicer {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    #slicer button {
+      padding: 8px 16px;
+      border: 1px solid #004d99;
+      border-radius: 4px;
+      background-color: #fff;
+      color: #004d99;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #slicer button.active {
+      background-color: #004d99;
+      color: #fff;
+    }
+    #weekDropdown, #monthDropdown {
+      display: inline-block;
+    }
+    #weekDropdown select, #monthDropdown select {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #004d99;
+      background-color: #004d99;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #slicer, #secondaryButtons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    #slicer button, #secondaryButtons button {
+      min-width: 180px;
+    }
+    .totals-labels {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    #totalsBox {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    #grossHours,
+    #loggedHours,
+    #depTotalHours {
+      font-weight: bold;
+    }
+    #totalEcom,
+    #totalRetail,
+    #totalBreak {
+      font-weight: bold;
+    }
+    .kpi-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+      padding: 2px 20px 12px 20px;
+      text-align: center;
+      min-width: 130px;
+      margin: 0 8px;
+      transition: box-shadow 0.2s;
+    }
+    .kpi-label {
+  color: #555;
+  font-size: 1em;
+  margin-bottom: 0px;
+  font-weight: 500;
+}
+.kpi-value {
+  color: #004d99;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+/* ——— Mantém todas as KPI-cards sempre na mesma linha ——— */
+#kpiCards {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: nowrap;    /* impede quebra automática */
+  overflow-x: auto;     /* adiciona scroll se ultrapassar a largura */
+}
+
+/* ——— Trunca apenas o texto de “Planned Hours” ——— */
+#dashboardPlannedLabel {
+  display: inline-block;   /* para respeitar largura máxima */
+  max-width: 120px;        /* ajuste conforme seu design */
+  white-space: nowrap;     /* sem quebras de linha */
+  overflow: hidden;        /* esconde o excesso */
+  text-overflow: ellipsis; /* mostra "..." no fim */
+}
+
+    #toggleValues span {
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    #toggleValues {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 16px;
+      height: 16px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+    #tasksBarContainer:hover #toggleValues span,
+    #toggleValues:hover span {
+      opacity: 1 !important;
+    }
+    #toggleValues:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    #ecomTaskFilter,
+    #retailTaskFilter {
+      width: auto;
+      min-width: 150px;
+      max-width: 300px;
+      max-height: calc(1.6em * 4);
+      overflow-y: auto;
+      min-height: 1.6em;
+      font-size: 0.9rem;
+      padding: 2px 4px;
+      vertical-align: middle;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      background-color: #fafafa;
+    }
+
+    /* =======================
+       CSS PARA OS MODAIS DE FILTRO
+       ======================= */
+    .modal-filter {
+      display: none;
+      position: fixed;
+      z-index: 3000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-filter .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      width: 350px;
+      max-height: 400px;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .modal-filter .modal-header {
+      font-weight: bold;
+      margin-bottom: 12px;
+      font-size: 1.1em;
+    }
+    .modal-filter .modal-footer {
+      margin-top: 12px;
+      text-align: right;
+    }
+    .modal-filter .modal-footer button {
+      padding: 6px 12px;
+      margin-left: 8px;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    .modal-filter .modal-footer button.confirm {
+      background-color: #007acc;
+      color: #fff;
+      border-color: #007acc;
+    }
+    .modal-filter .modal-footer button.cancel {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+   .modal-filter .modal-content > div {
+  display: flex;
+  flex-direction: column;
+  padding: 0;          /* remove espaçamentos extras */
+  margin: 0;           /* remove espaçamentos extras */
+}
+
+/* 2) Cada label vira flex‐container, alinhando checkbox e texto */
+/* ================================
+   Alinhamento vertical e horizontal
+   para cada checkbox + texto
+   ================================ */
+.modal-filter .modal-content > div {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+}
+
+.modal-filter label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.modal-filter label input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.modal-filter label span {
+  margin: 0;
+  flex: 1;
+}
+/* ─── Encolhe toda a aba Budget Tracker para caber na tela ─── */
+#budgetTracker {
+  /* Chrome, Edge e Safari */
+  zoom: 0.85;               
+  /* Firefox (fallback) */
+  transform: scale(0.85);
+  transform-origin: top left;
+  /* Corrige a largura para que o container ocupe 100% ajustado */
+  width: calc(100% / 0.855);
+}
+/* ============================= */
+/* Estilo para todas as budget-item */
+/* ============================= */
+#budgetLabels .budget-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;  /* largura mínima uniforme */
+  gap: 4px;          /* espaço entre label e valor */
+}
+
+/* Label: texto em <strong> */
+#budgetLabels .budget-item > strong {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+/* Valor: horas em <span> */
+#budgetLabels .budget-item > span {
+  font-size: 1em !important;
+  font-weight: bold !important;
+}
+/* ============================= */
+/* Agrupa Planned e Budget juntos */
+/* ============================= */
+#budgetLabels {
+  /* caso queira, pode mover o display e margin para cá, mas não é obrigatório */
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0;
+  gap: 40px;  /* espaçamento entre os 3 grupos */
+}
+
+#budgetLabels .budget-group {
+  display: flex;
+  flex-direction: row;    /* agora ficam lado a lado */
+  align-items: center;    /* verticalmente alinhados */
+  gap: 16px;              /* espaço entre Planned e Diff */
+}
+/* Diminui a fonte da coluna “Task” no modal de Planned Hours */
+#plannedHoursModal table#weeklyPlannedTable th:first-child,
+#plannedHoursModal table#weeklyPlannedTable td:first-child {
+  font-size: 0.8rem;
+}
+
+/* =========================================================
+   ★ NOVO: caixinha flutuante “Missing Budgets”
+   ========================================================= */
+#missingBudgetBox {
+  display: none;                 /* começa invisível            */
+  position: fixed;
+  top: 120px;                    /* ponto inicial na tela       */
+  right: 40px;
+  width: 320px;
+  max-height: 60vh;              /* scroll interno se crescer   */
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  cursor: grab;                  /* indicador de arrastar       */
+  z-index: 3100;                 /* acima dos gráficos          */
+}
+#missingBudgetBox.grabbing { cursor: grabbing; }
+
+#missingBudgetBox .mb-header {
+  background: #004d99;
+  color: #fff;
+  padding: 6px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  border-radius: 8px 8px 0 0;
+}
+
+#missingBudgetBox .mb-header button {
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#missingBudgetBox table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+#missingBudgetBox th,
+#missingBudgetBox td {
+  border: 1px solid #ddd;
+  padding: 4px 6px;
+  text-align: left;
+}
+
+/* cabeçalho mais escuro */
+#missingBudgetBox th {
+  background: #004d99;   /* azul-escuro igual ao topo da caixinha  */
+  color: #fff;           /* texto branco para contraste            */
+  position: sticky;
+  top: 0;
+}
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    Budget Tracker – Planned &amp; Consumed Hours
+    <div class="bottom-right">Victor Ribeiro &reg; (Solutions) &copy;</div>
+  </div>
+
+  <div id="main-content">
+    <!-- Nav Tabs -->
+    <div class="nav-tabs">
+      <button data-tab="home" class="active">Home</button>
+      <button data-tab="budgetTracker">Budget Tracker</button>
+      <button data-tab="dashboard">Dashboard</button>
+    </div>
+
+    <!-- Home Tab -->
+    <div id="home" class="tab-content active">
+      <details id="controlsAccordion">
+        <summary>Show/Hide Data Controls</summary>
+        <div id="controls">
+          <input type="file" id="fileInput">
+          <button id="processFileButton">Process File</button>
+          <button id="clearDataButton">Clear Data</button>
+          <div id="dateControls">
+            <input type="date" id="startDate">
+            <input type="date" id="endDate">
+            <button id="filterByDateButton">Filter by Date</button>
+          </div>
+          <div id="budgetControls">
+            <input type="number" id="budgetInput"
+                   placeholder="Enter Planned Budget"
+                   oninput="updateResult()">
+          </div>
+        </div>
+      </details>
+
+      <div class="totals-labels">
+        <div>Gross Hours: <span id="grossHours">0:00</span></div>
+        <div>Logged Hours: <span id="loggedHours">0:00</span></div>
+        <div>Unlogged&nbsp;Hours: <span id="depTotalHours">0:00</span></div>
+      </div>
+
+      <div id="slicer">
+        <button class="filter-button" data-department="Ecom">Ecom</button>
+        <button class="filter-button" data-department="Retail">Retail</button>
+        <button class="filter-button" data-department="Break" id="filterByBreakButton">Break</button>
+        <button class="filter-button active" data-department="All">All</button>
+        <div id="weekDropdown">
+          <select id="selectWeek">
+            <option value="">Select Week</option>
+          </select>
+        </div>
+        <div id="monthDropdown">
+          <select id="selectMonth">
+            <option value="">Select Month</option>
+          </select>
+        </div>
+        <button class="filter-button" id="toggleResultButton">Show/Hide Result</button>
+        <div id="codeFilterContainer" style="display: inline-block; margin-left: 10px;">
+          <select id="codeFilter" style="padding: 6px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="all">All</option>
+            <option value="missingTask">Missing Task</option>
+            <option value="manager">Manager</option>
+            <option value="operative">Operative</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="secondaryButtons">
+        <div id="headcountLabel" style="display:inline-block; margin-right:20px;">
+          <strong>Headcount:</strong>
+          <span id="headcountCount">0</span>
+        </div>
+        <button class="filter-button" id="downloadExcelButton" style="background-color: #28a745; color: white;">
+          Download Excel Report Between Dates
+        </button>
+        <button class="filter-button" id="clearHistoryButton">C. History</button>
+        <div id="missingTaskLabel" style="display:inline-block; margin-left:20px;">
+          <strong>Missing Task:</strong>
+          <span id="missingTaskCount" class="highlight-number">0</span>
+        </div>
+      </div>
+
+      <!-- Password Modal -->
+      <div id="passwordModal" class="modal">
+        <div class="modal-content">
+          <p>Enter Password</p>
+          <input type="password" id="passwordInput">
+          <div class="modal-buttons">
+            <button id="confirmPasswordButton" class="confirm-button">OK</button>
+            <button id="cancelPasswordButton" class="cancel-button">Cancel</button>
+          </div>
+          <p id="errorMessage" style="color: red; display: none;">Incorrect password. Please try again.</p>
+        </div>
+      </div>
+
+      <!-- Date Modal -->
+      <div id="dateModal" class="modal">
+        <div class="modal-content">
+          <p>Select Date Range to Clear History</p>
+          <input type="date" id="clearStartDate">
+          <input type="date" id="clearEndDate">
+          <div class="modal-buttons">
+            <button id="confirmDateButton" class="confirm-button">OK</button>
+            <button id="cancelDateButton" class="cancel-button">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="resultBox"></div>
+
+<div id="result">
+  <table id="resultTable">
+    <thead>
+      <tr>
+        <th>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap:3px;">
+            <span>Employee</span>
+            <input class="filter-input" type="text" id="employeeFilter" placeholder="Filter">
+          </div>
+        </th>
+        <th>Person Number</th>
+        <th>Role</th>
+        <th>
+          <div style="display: flex; align-items: center; gap:3px; justify-content: flex-start;">
+            <span>Date</span>
+            <select id="dateFilter" style="font-size: 0.75rem; padding: 2px; width: 85px; flex-shrink: 0;">
+              <option value="">All</option>
+            </select>
+          </div>
+        </th>
+        <th>Week</th>
+        <th>Month</th>
+        <th>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap:3px;">
+            <span>Labour Account</span>
+            <input class="filter-input" type="text" id="labourAccountFilter" placeholder="Filter">
+          </div>
+        </th>
+        <th>Dep.</th>
+        <th>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap:3px;">
+            <span>Task</span>
+            <input class="filter-input" type="text" id="taskFilter" placeholder="Filter">
+          </div>
+        </th>
+        <th>Total Hours</th>
+
+              <th>
+                <div style="display: flex; align-items: center; gap: 3px; justify-content: flex-start;">
+                  <span>Pay Code</span>
+                  <select
+                    id="payCodeFilter"
+                    style="font-size: 0.8rem; padding: 2px; width: 60px; flex-shrink: 0;"
+                  >
+                    <option value="">All</option>
+                  </select>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows serão adicionadas dinamicamente -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="totalsBox">
+        <div>Total Hours Ecom: <span id="totalEcom">0:00</span></div>
+        <div>Total Hours Retail: <span id="totalRetail">0:00</span></div>
+        <div>Total Hours Paid Break: <span id="totalBreak">0:00</span></div>
+      </div>
+    </div>
+
+    <!-- Budget Tracker Tab -->
+    <div id="budgetTracker" class="tab-content">
+      <button id="openPlannedHoursModal" class="filter-button">Set Weekly Planned Hours</button>
+      <input type="text" id="modalTaskFilter" placeholder="Filter task" class="filter-input" style="margin-left:10px;">
+      <button id="openEditHoursModal" class="filter-button" style="margin-left:10px;">Edit Hours</button>
+      <button id="downloadBudgetReport" class="filter-button" style="margin-left:10px;">
+       Download Budget Report</button>
+       <div id="budgetLabels" style="display:flex; justify-content:space-between; margin:10px 0;">
+  <!-- 1) Total Consumed isolado -->
+  <div class="budget-item">
+    <strong>Total Consumed:</strong>
+    <span id="totalConsumed">0:00</span>
+  </div>
+
+  <!-- 2) Grupo Planned -->
+  <div class="budget-group">
+    <div class="budget-item">
+      <strong id="plannedLabel">Planned Hours</strong>
+      <span id="totalPlanned">443:00</span>
+    </div>
+    <div class="budget-item">
+      <strong>Planned Diff.:</strong>
+      <span id="totalDifference">+18036:15:36</span>
+    </div>
+  </div>
+
+  <!-- 3) Grupo Budget -->
+  <div class="budget-group">
+    <div class="budget-item">
+      <strong>Budget (Logged Tasks):</strong>
+      <span id="totalBudget">650:00</span>
+    </div>
+    <div class="budget-item">
+      <strong>Budget Diff.:</strong>
+      <span id="totalBudgetDifference">+17829:15:36</span>
+    </div>
+  </div>
+</div>
+
+
+
+      <table id="budgetTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Day of Week</th>
+            <th>Task</th>
+            <th>Consumed Hours</th>
+            <th>Planned Hours</th>
+            <th>Difference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows serão geradas dinamicamente -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="tab-content">
+      <div style="text-align: right; margin-bottom: 10px; display: flex; justify-content: flex-end; gap: 12px;">
+        <button id="downloadPdfDashboard"
+          style="
+            background: #fff;
+            color: #004d99;
+            border: 1.5px solid #004d99;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: none;
+            transition: background 0.18s, color 0.18s, border-color 0.18s;
+          "
+          onmouseover="this.style.background='#004d99';this.style.color='#fff';"
+          onmouseout="this.style.background='#fff';this.style.color='#004d99';"
+        >
+          &#128190; Download PDF
+        </button>
+        <button 
+          id="toggleComparisonPanel"
+          style="
+            background: #eee;
+            color: #1c2340;
+            border: 1.5px solid #bbb;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 4px;
+            box-shadow: 0 2px 7px rgba(0,0,0,0.09);
+            transition: background 0.15s, color 0.18s, border-color 0.18s;
+            display: flex; align-items: center; gap: 6px;
+          "
+          title="Show/Hide Ecom vs Retail Panel"
+        >
+          <span id="toggleIcon" style="font-size:17px;">&#128200;</span>
+          <span>Comparison Panel</span>
+        </button>
+      </div>
+
+      <div id="kpiCards" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 25px;">
+  <div class="kpi-card">
+    <div class="kpi-label">Consumed Hours</div>
+    <div class="kpi-value" id="kpiConsumed">0:00</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-label" id="dashboardPlannedLabel">Planned Hours</div>
+    <div class="kpi-value" id="kpiPlanned">0:00</div>
+  </div>
+ <div class="kpi-card" style="position:relative;">
+  <div class="kpi-label" id="kpiBudgetLabel">Budget Total</div>
+  <div class="kpi-value" id="kpiBudgetTotal">0:00</div>
+
+  <!-- ícone toggle -->
+  <button id="toggleBudgetMode"
+          title="Mostrar only visíveis / total"
+          style="position:absolute; top:6px; right:6px;
+                 border:none; background:transparent; cursor:pointer;
+                 font-size:16px; line-height:1;">
+    🔄
+  </button>
+
+  <!-- ★ NOVO botão lupa – tasks com budget, 0 h no CSV -->
+  <button id="showMissingBudgets"
+          title="Listar tasks com budget mas sem consumo"
+          style="position:absolute; top:28px; right:6px;
+                 border:none; background:transparent; cursor:pointer;
+                 font-size:16px; line-height:1;">
+    🔍
+  </button>
+</div>
+
+
+  <!-- ★ NOVO cartão: Budget (fica logo depois de Planned Hours) -->
+  <div class="kpi-card">
+    <div class="kpi-label">Budget Remaining</div>
+    <!-- valor vem via JS – mesmo estilo das outras KPI-values -->
+    <div class="kpi-value" id="kpiBudget">0:00</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-label">Utilization</div>
+    <div class="kpi-value" id="kpiUtil">0%</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-label">Headcount</div>
+    <div class="kpi-value" id="kpiHeadcount">0</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-label">Missing Task</div>
+    <div class="kpi-value" id="kpiMissing">0</div>
+  </div>
+</div>
+
+
+      <div style="display: flex; flex-wrap: wrap; gap: 25px; justify-content: center;">
+        <div style="flex: 1; min-width: 350px;">
+          <canvas id="trendChart" height="160"></canvas>
+        </div>
+        <div style="flex: 1; min-width: 350px;">
+          <canvas id="deptChart" height="160"></canvas>
+        </div>
+        <div style="flex: 1; min-width: 350px;">
+          <canvas id="tasksChart" height="160"></canvas>
+        </div>
+      </div>
+
+      <div id="tasksBarContainer" style="position: relative; width: 100%; margin-top: 30px;">
+        <canvas id="tasksBarChart" style="width: 100%; height: 260px;"></canvas>
+        <button id="toggleValues" title="Mostrar valores"
+                style="position: absolute; top: 8px; left: 8px; width: 20px; height: 20px;
+                       background: transparent; border: none; cursor: pointer;
+                       transition: border 0.2s, background 0.2s; z-index: 10;">
+          <span style="font-size: 14px; color: #666; opacity: 0; transition: opacity 0.2s;">•</span>
+        </button>
+      </div>
+    </div>
+    <!-- /fecha #dashboard -->
+
+    <!-- Início do painel de comparação (com dropdown de dias) -->
+<div id="comparisonPanel"
+     style="position: fixed; top: 0; left: 0; width: 100vw; height: 97vh;
+            background: #fff; box-shadow: 0 8px 40px rgba(0,0,0,0.17);
+            padding: 18px 14px 30px 18px; overflow-y: auto; z-index: 2000;">
+  <div style="position: relative; width: 100%; margin-bottom: 10px; height: 28px;">
+    <h3 style="
+          margin: 0;
+          position: absolute;
+          left: 61%;
+          transform: translateX(-50%);
+          top: 50%;
+          transform-origin: center;
+          translate: -50% -50%;
+        ">
+      Ecom vs Retail: Consumed vs Planned
+    </h3>
+
+    <!-- ↓ Dropdown de seleção de dia, recém-inserido à esquerda do “✖” ↓ -->
+    <select id="selectComparisonDay"
+            style="
+              position: absolute;
+              top: 50%;
+              right: 75px;
+              transform: translateY(-50%);
+              padding: 2px 6px;
+              font-size: 0.9rem;
+              border-radius: 4px;
+              border: 1px solid #ccc;
+              background: #fff;
+              cursor: pointer;
+            ">
+      <option value="">All Days</option>
+    </select>
+
+    <button id="closeComparisonPanel"
+          style="
+            position: absolute;
+            top: 50%;
+            right: 35px;
+            transform: translateY(-50%);
+            font-size: 22px;
+            background: none;
+            border: none;
+            color: #c1121f;
+            cursor: pointer;
+            line-height: 1;
+            padding: 3px 7px;
+            border-radius: 50%;
+            transition: background 0.15s;
+          ">
+      ✖
+    </button>
+  </div>
+
+  <div id="comparisonPanelContent">
+
+    <!-- ↓ NOVO: painel de detalhe, escondido até o hover ↓ -->
+    <div id="detailContainer" style="display:none; margin-bottom:20px;">
+      <h4 id="detailTitle" style="text-align:center; margin:0 0 8px 0;"></h4>
+      <canvas id="detailChart" style="width:100%; height:200px;"></canvas>
+      <button id="closeDetail"
+              style="display:block; margin:8px auto; padding:4px 8px; border:none;
+                     background:#c1121f; color:#fff; border-radius:4px; cursor:pointer;">
+        Fechar detalhe
+      </button>
+    </div>
+
+    <!-- ECOM Chart + Botão de Filtro -->
+    <div class="comparison-row" style="margin-bottom: 30px; position: relative;">
+      <h4 style="margin: 0 0 6px 0;">Ecom</h4>
+      <button id="openEcomFilterBtn"
+              style="position: absolute; top: 0; left: 20px;
+                     background: #007acc; color: #fff; border: none;
+                     border-radius: 4px; padding: 2px 6px; font-size: 0.8rem;
+                     cursor: pointer;">
+        ⚙ Filtrar
+      </button>
+      <canvas id="ecomComparisonChart" style="margin-top: 12px; width: 100%; height: 200px;"></canvas>
+    </div>
+
+    <!-- RETAIL Chart + Botão de Filtro -->
+    <div class="comparison-row" style="margin-bottom: 30px; position: relative;">
+      <h4 style="margin: 0 0 6px 0;">Retail</h4>
+      <button id="openRetailFilterBtn"
+              style="position: absolute; top: 0; left: 20px;
+                     background: #007acc; color: #fff; border: none;
+                     border-radius: 4px; padding: 2px 6px; font-size: 0.8rem;
+                     cursor: pointer;">
+        ⚙ Filtrar
+      </button>
+      <canvas id="retailComparisonChart" style="margin-top: 12px; width: 100%; height: 200px;"></canvas>
+    </div>
+
+  </div>
+</div>
+<!-- Fim do painel de comparação -->
+
+<!-- Fim do painel de comparação -->
+
+    <!-- ===== Modal de Filtro Ecom ===== -->
+    <div id="ecomFilterModal" class="modal-filter">
+      <div class="modal-content">
+        <div class="modal-header">Filtrar Ecom Tasks</div>
+        <div id="ecomTasksModalContainer">
+          <!-- Checkboxes de Ecom serão injetados aqui via JavaScript -->
+        </div>
+        <div class="modal-footer">
+          <button class="cancel" onclick="closeEcomModal()">Cancelar</button>
+          <button class="confirm" onclick="applyEcomFilter()">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Modal de Filtro Retail ===== -->
+    <div id="retailFilterModal" class="modal-filter">
+      <div class="modal-content">
+        <div class="modal-header">Filtrar Retail Tasks</div>
+        <div id="retailTasksModalContainer">
+          <!-- Checkboxes de Retail serão injetados aqui via JavaScript -->
+        </div>
+        <div class="modal-footer">
+          <button class="cancel" onclick="closeRetailModal()">Cancelar</button>
+          <button class="confirm" onclick="applyRetailFilter()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Setting Planned Hours -->
+  <!-- Modal for Setting Planned Hours (semana + tabela 7×N) -->
+<div id="plannedHoursModal" class="modal">
+  <div class="modal-content" style="width: 800px; max-height: 80vh; overflow-y: auto;">
+    <h3>Set Weekly Planned Hours</h3>
+
+    <!-- 1) Seletor de Semana -->
+    <div style="margin-bottom: 12px;">
+      <label for="modalWeekNumber">Semana nº:</label>
+      <input type="number" id="modalWeekNumber" min="1" max="53"
+             style="width: 60px; padding:4px; margin-left:6px;">
+    </div>
+
+    <!-- 2) Filtro de Task -->
+    <div style="margin-bottom: 12px;">
+      <label for="setModalTaskFilter">Filter Task:</label>
+      <input type="text" id="setModalTaskFilter" class="filter-input" style="margin-left:6px;">
+    </div>
+
+    <!-- 3) Tabela 7 dias × N tasks -->
+    <div style="overflow-x: auto; margin-bottom: 12px;">
+      <table id="weeklyPlannedTable" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="border:1px solid #ddd; padding:6px;">Task</th>
+            <!-- Cabeçalhos dos 7 dias serão criados dinamicamente -->
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Linhas de tasks + inputs HH:MM -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 4) Botões -->
+    <div class="modal-buttons" style="justify-content: center; gap: 16px;">
+      <button id="confirmPlannedHours" class="confirm-button">OK</button>
+      <button id="cancelPlannedHours" class="cancel-button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Modal for Editing Planned Hours -->
+  <div id="editHoursModal" class="modal">
+    <div class="modal-content">
+      <p>Edit Planned Hours</p>
+      <label for="editModalTaskFilter">Filter Task:</label>
+      <input type="text" id="editModalTaskFilter" class="filter-input">
+      <br>
+      <label for="editModalTask">Task:</label>
+      <select id="editModalTask">
+        <option value="">Select Task</option>
+        <!-- Options serão populadas dinamicamente -->
+      </select>
+      <br>
+      <label for="editModalSelectedDay">Select Day:</label>
+      <input type="date" id="editModalSelectedDay">
+      <br>
+      <label for="editModalDayPlanned">Planned Hours for that Day:</label>
+      <input type="text" id="editModalDayPlanned" placeholder="HH:MM">
+      <br>
+      <div class="modal-buttons">
+        <button id="confirmEditHours" class="confirm-button">OK</button>
+        <button id="cancelEditHours" class="cancel-button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de senha para Edit Hours -->
+  <div id="editHoursPasswordModal" class="modal">
+    <div class="modal-content">
+      <p>Enter password to Edit Hours</p>
+      <input type="password" id="editHoursPasswordInput">
+      <div class="modal-buttons">
+        <button id="confirmEditHoursPasswordButton" class="confirm-button">OK</button>
+        <button id="cancelEditHoursPasswordButton" class="cancel-button">Cancel</button>
+      </div>
+      <p id="editHoursErrorMessage" style="color: red; display: none;">
+        Incorrect password. Please try again.
+      </p>
+    </div>
+  </div>
+<!-- Modal de detalhe diário -->
+<div id="dailyDetailModal" class="modal-filter">
+  <div class="modal-content" style="
+      width: 90vw;
+      max-width: 700px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      box-sizing: border-box;
+    ">
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <span id="dailyDetailTitle">Detalhe Diário</span>
+      <button id="closeDailyDetailBtn"
+              type="button"
+              style="background: none; border: none; font-size: 20px; cursor: pointer;">
+        ✖
+      </button>
+    </div>
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+      <canvas id="dailyDetailChart" style="width: 100%; height: 100%;"></canvas>
+    </div>
+  </div>
+</div>
+<!-- ★ NOVA caixinha flutuante – Missing Budgets -->
+<div id="missingBudgetBox">
+  <div class="mb-header">
+    <span>Tasks com Budget &amp; 0&nbsp;h</span>
+    <button id="closeMissingBudgets" title="Fechar">✖</button>
+  </div>
+  <div class="mb-body">
+    <!-- A tabela será injetada via JavaScript -->
+  </div>
+</div>
+
+  <!-- External Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    // ───────── Variáveis Globais ─────────
+const taskMapping = {
+  "1007680000": "R.Missing Task",
+  "1007681300": "R.Retail Putaway",
+  "1007681322": "R.Aged Putaway",
+  "1007681400": "R.Concession XDock",
+  "1007681404": "R.FastTrack",
+  "1007681500": "R.RTWs",
+  "1007681530": "R.RTV Warehouse",
+  "1007682000": "R.Retail Loading",
+  "1007682100": "R.Retail Pick",
+  "1007683200": "R.Retail Inventory",
+  "1007683252": "R.Queries",
+  "1007683311": "R.Retail Administration",
+  "1007683550": "R.Selfridges Internal Xcharge",
+  "1007684010": "R.Paid Break",
+  "1007684035": "R.Briefing",
+  "1007684037": "R.Meeting",
+  "1007684042": "R.Performance Coaches",
+  "1007684044": "R.Training (Core)",
+  "1007684046": "R.OMS Training",
+  "1007684054": "R.Housekeeping",
+  "1007684072": "R.Union",
+  "1007688009": "R.Warehouse FLM",
+  "1007688198": "R.Exceptions - NonFashion",
+  "1007688206": "R.Training (Agency), Induction",
+  "1007688223": "R.Retail Marshalling",
+  "1007688224": "R.PI",
+  "1007688332": "R.Consolidation",
+  "1007688338": "R.OMS Control Room",
+  "1007688339": "R.RTV Admin",
+  "1007683250": "R.QC Checking",
+  "1007686000": "R.Trainers",
+  "1007688412": "R.Price Changes",
+  "1007688433": "R.Exceptions - Fashion",
+  "1007688434": "R.Exceptions - Food",
+  "1007688436": "R.Senior Managers",
+  "1007688437": "R.Receiving",
+  "1007688438": "R.Cosmetics F/T Processing+C.Group 63 T",
+  "1007688439": "R.Ladies Fashion",
+  "1007688440": "R.Accessories",
+  "1007688441": "R.Menswear Fashion",
+  "1007688442": "R.Children/Toys/Games proc. & Ticketing",
+  "1007688444": "R.Books",
+  "1007688445": "R.Children",
+  "1007688446": "R.Home Accessories (Non Fashion)",
+  "1007688452": "R.Pins & Tags",
+  "1007688453": "R.Food Processing",
+  "1007688454": "R.Zetes",
+  "1007688455": "R.Cosmetics P/A Processing",
+  "1007688457": "R.Exceptions - Beauty",
+  "1007688458": "R.Cubiscan",
+  "1007650000": "E.Missing Task",
+  "1007651300": "E.Ecom Putaway",
+  "1007651500": "E.Returns",
+  "1007651524": "E.Returns putaway",
+  "1007652000": "E.Despatch",
+  "1007652100": "E.Ecom Pick",
+  "1007652312": "E.Ecom VNA Drop",
+  "1007652400": "E.Packing",
+  "1007653200": "E.Ecom Inventory",
+  "1007653250": "E.QC Checking",
+  "1007653252": "E.Goods In queries",
+  "1007653311": "E.Ecom Administration",
+  "1007654010": "E.Paid Break",
+  "1007654035": "E.Briefs",
+  "1007654037": "E.Meetings",
+  "1007654042": "E.OMS Coaches",
+  "1007654044": "E.Training (Core)",
+  "1007654046": "E.OMS Training",
+  "1007654054": "E.Housekeeping",
+  "1007654072": "E.Union",
+  "1007656000": "E.Trainers",
+  "1007658009": "E.Warehouse FLM",
+  "1007658198": "E.Exceptions",
+  "1007658206": "E.Training (Agency), Induction",
+  "1007658223": "E.Ecom Marshalling",
+  "1007658224": "E.Inventory Pick",
+  "1007658332": "E.Consolidation",
+  "1007658337": "E.Packaging Admin",
+  "1007658338": "E.OMS Control Room",
+  "1007658339": "E.Concessions RTVs",
+  "1007658340": "E.Wave Running",
+  "1007658342": "E.hazard",
+  "1007683550": "E.Selfridges Internal Xcharge",
+  "1007658361": "E.Inventory Photo studio",
+  "1007658384": "E.Cage pick",
+  "1007658388": "E.Cage pack",
+  "1007658430": "E.Jo Malone",
+  "1007658431": "E.Entrupy",
+  "1007658432": "E.Gift boxes",
+  "1007658436": "E.Senior Managers",
+  "1007658452": "E.Pins & Tags",
+  "1007658456": "E.Goods In CN Proc.",
+  "1007658459": "E.Packaging Stock Count",
+  "1007658597": "E.Transport"
+};
+
+    let storedData            = JSON.parse(localStorage.getItem('csvData') || '[]');
+let plannedHoursTracker   = JSON.parse(localStorage.getItem('plannedHoursTracker') || '{}');
+let currentDepartmentFilter = 'All';
+let grossMinutes          = 0;
+let originalTotalMinutes  = 0;
+let showValues = false;
+let toggleListenerAdded = false;
+
+/* ▼ NOVO: controla o modo do cartão Budget Total (true = total; false = visíveis) */
+let showBudgetTotal = true;
+
+// Novas variáveis de estado para filtros de Comparison Panel
+let selectedEcomTasks   = [];
+let selectedRetailTasks = [];
+
+
+    // formata segundos totais em "HH:MM:SS"
+    function formatTime(totalSeconds) {
+      const hours     = Math.floor(totalSeconds / 3600);
+      const remainder = totalSeconds % 3600;
+      const minutes   = Math.floor(remainder / 60);
+      const seconds   = remainder % 60;
+      const hh = String(hours).padStart(2, '0');
+      const mm = String(minutes).padStart(2, '0');
+      const ss = String(seconds).padStart(2, '0');
+      return `${hh}:${mm}:${ss}`;
+    }
+    function formatTimeHHMM(totalSeconds) {
+      const hours   = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+
+    const managersList = [
+      { name: "Akash Mohammed", personNumber: "82610253992" },
+      { name: "Ambrutis Skirmantas", personNumber: "82610122024" },
+      { name: "Antaluta Roxana Elena", personNumber: "82610134667" },
+      { name: "Askew Christopher", personNumber: "82610105763" },
+      { name: "Balde Mamadou", personNumber: "82610128333" },
+      { name: "Bereza Raluca", personNumber: "82610124836" },
+      { name: "Burton Adam", personNumber: "82610126261" },
+      { name: "Busby Ian", personNumber: "82610121362" },
+      { name: "Cleaves Matt", personNumber: "82610156629" },
+      { name: "Cox Hayley", personNumber: "82610149965" },
+      { name: "Connolly Joseph", personNumber: "82610103701" },
+      { name: "Davies Dean", personNumber: "82610106041" },
+      { name: "Ellis Oliver", personNumber: "82610281094" },
+      { name: "Fiaz Mohammed", personNumber: "82610107884" },
+      { name: "Ghalib Assem", personNumber: "82610240991" },
+      { name: "Goodwin Mick", personNumber: "82610130721" },
+      { name: "Grigore Mirela", personNumber: "82610154295" },
+      { name: "Grozavu Alexandru", personNumber: "82610135568" },
+      { name: "Gulbahar Aminah", personNumber: "82610128865" },
+      { name: "Hobbs Christopher", personNumber: "82610301864" },
+      { name: "James Joanne", personNumber: "82610122611" },
+      { name: "Jarvis Adam", personNumber: "82610117318" },
+      { name: "Kendall Stephen", personNumber: "82610108753" },
+      { name: "Khan Assam", personNumber: "82610119402" },
+      { name: "Lupu Lavinia", personNumber: "82610154356" },
+      { name: "McDonald Simon", personNumber: "82610115109" },
+      { name: "Miecielica Agata", personNumber: "82610124485" },
+      { name: "Miseviciute Eimante", personNumber: "82610135464" },
+      { name: "Nita Silvia", personNumber: "82610146015" },
+      { name: "Oprisiu Alexandru", personNumber: "82610151109" },
+      { name: "Parker Gary", personNumber: "82610230853" },
+      { name: "Parker Richard", personNumber: "82610247934" },
+      { name: "Pleaden Jonathan", personNumber: "82610126053" },
+      { name: "Ribeiro Victor", personNumber: "82610138612" },
+      { name: "Sadowy Dominika", personNumber: "82610131923" },
+      { name: "Salt Steven", personNumber: "82610119214" },
+      { name: "Sergalis Audrius", personNumber: "82610153159" },
+      { name: "Simaitis Audrius", personNumber: "82610141024" },
+      { name: "Sobieski Wojciech", personNumber: "82610125655" },
+      { name: "Stefanovici Sergiu Adrian", personNumber: "82610137926" },
+      { name: "Tanase Crina", personNumber: "82610129702" },
+      { name: "Thind Harwinder", personNumber: "82610128711" },
+      { name: "Tran Peter", personNumber: "82610128203" },
+      { name: "Ullah Sana", personNumber: "82610121303" },
+      { name: "Viana Nivio", personNumber: "82610148847" },
+      { name: "White Nigel", personNumber: "82610110410" },
+      { name: "Wilson Ronald", personNumber: "82610109544" },
+      { name: "Yasmeen Tahira", personNumber: "82610132057" }
+    ];
+
+    document.addEventListener('DOMContentLoaded', function () {
+  // ─── FUNÇÃO NOVA: popula o dropdown de dias ───
+  function populateComparisonDayDropdown() {
+    const selectDay = document.getElementById('selectComparisonDay');
+    selectDay.innerHTML = '<option value="">All Days</option>';
+    const allDates = [...new Set(storedData.map(entry => entry.date))];
+    allDates.sort((a, b) => {
+      const [da, ma, ya] = a.split('/').map(Number);
+      const [db, mb, yb] = b.split('/').map(Number);
+      return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+    });
+    allDates.forEach(dateStr => {
+      const opt = document.createElement('option');
+      opt.value       = dateStr;
+      opt.textContent = dateStr;
+      selectDay.appendChild(opt);
+    });
+    selectDay.addEventListener('change', renderComparisonCharts);
+  }
+  
+
+  // … aqui continuam todas as outras funções e event listeners do seu código …
+
+  // 1) Função para preencher dropdown de Pay Code
+  function populatePayCodeDropdown() {
+    const payCodeSelect = document.getElementById('payCodeFilter');
+    payCodeSelect.innerHTML = '<option value="">All</option>';
+    const uniqueCodes = new Set(
+      storedData
+        .map(entry => entry.payCode || '')
+        .filter(code => code.trim() !== '')
+    );
+    uniqueCodes.forEach(code => {
+      const opt = document.createElement('option');
+      opt.value       = code;
+      opt.textContent = code;
+      payCodeSelect.appendChild(opt);
+    });
+  }
+function isValidHHMM(str) {
+  // aceita H, HH ou HHH… :MM onde MM vai de 00 a 59
+  return /^\d+:\d{2}$/.test(str) &&
+         Number(str.split(':')[1]) < 60;
+}
+
+      // Função para converter HH:MM para decimal
+function convertHHMMToDecimal(timeStr) {
+  const parts = timeStr.split(':');
+  if (parts.length === 2) {
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    if (!isNaN(hours) && !isNaN(minutes)) {
+      return hours + minutes / 60;
+    }
+  }
+  return null;
+}
+
+function validateTimeInput(input) {
+  const val = input.value.trim();
+  if (!val) return true;
+
+  // se for Budget semanal, permite horas >= 24
+  if (input.dataset.weekBudget === 'true') {
+    if (!/^\d+:[0-5]\d$/.test(val)) {
+      alert('Please enter time in HH:MM format (ex.: 00:00).');
+      // deixa o foco voltar só após o blur terminar
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 0);
+      return false;
+    }
+  } else {
+    // dias da semana, apenas 00–23:00–59
+    if (!isValidHHMM(val)) {
+      alert('Please enter time in HH:MM format (ex.:00:00).');
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 0);
+      return false;
+    }
+  }
+
+  return true;
+}
+ // 2) populateComparisonTaskFilters: preenche os modais de filtro
+      function populateComparisonTaskFilters() {
+        const ecomTasksSet   = new Set();
+        const retailTasksSet = new Set();
+        storedData.forEach(entry => {
+          if (entry.department === 'Ecom')   ecomTasksSet.add(entry.task);
+          if (entry.department === 'Retail') retailTasksSet.add(entry.task);
+        });
+
+        const ecomModalContainer   = document.getElementById('ecomTasksModalContainer');
+        const retailModalContainer = document.getElementById('retailTasksModalContainer');
+        ecomModalContainer.innerHTML   = '';
+        retailModalContainer.innerHTML = '';
+
+        // “Todas as Tasks” no modal Ecom
+        const allEcomLabel = document.createElement('label');
+        allEcomLabel.innerHTML = `
+          <input type="checkbox" value="" class="ecom-modal-checkbox" checked />
+          <span style="font-weight: bold;">Todas as Tasks</span>
+        `;
+        ecomModalContainer.appendChild(allEcomLabel);
+
+        // “Todas as Tasks” no modal Retail
+        const allRetailLabel = document.createElement('label');
+        allRetailLabel.innerHTML = `
+          <input type="checkbox" value="" class="retail-modal-checkbox" checked />
+          <span style="font-weight: bold;">Todas as Tasks</span>
+        `;
+        retailModalContainer.appendChild(allRetailLabel);
+
+        function createCheckboxLabel(task, cls) {
+          const lbl = document.createElement('label');
+          lbl.innerHTML = `
+            <input type="checkbox" value="${task}" class="${cls}" />
+            <span>${task}</span>
+          `;
+          return lbl;
+        }
+
+        Array.from(ecomTasksSet).sort().forEach(task => {
+          const lbl = createCheckboxLabel(task, 'ecom-modal-checkbox');
+          ecomModalContainer.appendChild(lbl);
+        });
+
+        Array.from(retailTasksSet).sort().forEach(task => {
+          const lbl = createCheckboxLabel(task, 'retail-modal-checkbox');
+          retailModalContainer.appendChild(lbl);
+        });
+
+        // Lógica “Todas as Tasks” ↔ checkboxes individuais (modal Ecom)
+        const ecomAllCheckbox    = ecomModalContainer.querySelector('input.ecom-modal-checkbox[value=""]');
+        const ecomTaskCheckboxes = Array.from(ecomModalContainer.querySelectorAll('input.ecom-modal-checkbox')).filter(cb => cb.value !== '');
+        ecomAllCheckbox.addEventListener('change', () => {
+          if (ecomAllCheckbox.checked) {
+            ecomTaskCheckboxes.forEach(cb => cb.checked = false);
+          }
+        });
+        ecomTaskCheckboxes.forEach(cb => {
+          cb.addEventListener('change', () => {
+            if (cb.checked) {
+              ecomAllCheckbox.checked = false;
+            }
+            const algumaMarcada = ecomTaskCheckboxes.some(x => x.checked);
+            if (!algumaMarcada) {
+              ecomAllCheckbox.checked = true;
+            }
+          });
+        });
+
+        // Lógica “Todas as Tasks” ↔ checkboxes individuais (modal Retail)
+        const retailAllCheckbox    = retailModalContainer.querySelector('input.retail-modal-checkbox[value=""]');
+        const retailTaskCheckboxes = Array.from(retailModalContainer.querySelectorAll('input.retail-modal-checkbox')).filter(cb => cb.value !== '');
+        retailAllCheckbox.addEventListener('change', () => {
+          if (retailAllCheckbox.checked) {
+            retailTaskCheckboxes.forEach(cb => cb.checked = false);
+          }
+        });
+        retailTaskCheckboxes.forEach(cb => {
+          cb.addEventListener('change', () => {
+            if (cb.checked) {
+              retailAllCheckbox.checked = false;
+            }
+            const algumaMarcada = retailTaskCheckboxes.some(x => x.checked);
+            if (!algumaMarcada) {
+              retailAllCheckbox.checked = true;
+            }
+          });
+        });
+      }
+
+      // 3) Funções para abrir/fechar modais
+document.getElementById('openEcomFilterBtn').addEventListener('click', () => {
+  populateComparisonTaskFilters();
+  document.getElementById('ecomFilterModal').style.display = 'flex';
+});
+document.getElementById('openRetailFilterBtn').addEventListener('click', () => {
+  populateComparisonTaskFilters();
+  document.getElementById('retailFilterModal').style.display = 'flex';
+});
+function closeEcomModal() {
+  document.getElementById('ecomFilterModal').style.display = 'none';
+}
+function closeRetailModal() {
+  document.getElementById('retailFilterModal').style.display = 'none';
+}
+
+// 4) Funções de “OK” dos modais -> atualizam estados e redesenham gráficos
+function applyEcomFilter() {
+  const allChecked = document.querySelector('#ecomTasksModalContainer input.ecom-modal-checkbox[value=""]').checked;
+  if (allChecked) {
+    selectedEcomTasks = [];
+  } else {
+    selectedEcomTasks = Array.from(
+      document.querySelectorAll('#ecomTasksModalContainer input.ecom-modal-checkbox')
+    )
+    .filter(cb => cb.value !== '' && cb.checked)
+    .map(cb => cb.value);
+  }
+  closeEcomModal();
+  renderComparisonCharts();
+}
+function applyRetailFilter() {
+  const allChecked = document.querySelector('#retailTasksModalContainer input.retail-modal-checkbox[value=""]').checked;
+  if (allChecked) {
+    selectedRetailTasks = [];
+  } else {
+    selectedRetailTasks = Array.from(
+      document.querySelectorAll('#retailTasksModalContainer input.retail-modal-checkbox')
+    )
+    .filter(cb => cb.value !== '' && cb.checked)
+    .map(cb => cb.value);
+  }
+  closeRetailModal();
+  renderComparisonCharts();
+}
+
+// === EXPORTANDO AS FUNÇÕES PARA O ESCOPO GLOBAL ===
+window.closeEcomModal    = closeEcomModal;
+window.applyEcomFilter   = applyEcomFilter;
+window.closeRetailModal  = closeRetailModal;
+window.applyRetailFilter = applyRetailFilter;
+
+
+      // 5) Função para renderizar os charts de comparação
+      function renderComparisonCharts() {
+  if (window.ecomComparisonChartObj)   window.ecomComparisonChartObj.destroy();
+  if (window.retailComparisonChartObj) window.retailComparisonChartObj.destroy();
+
+  // 1) Lê o dia selecionado (string “DD/MM/YYYY” ou vazio)
+  const selectedDay = document.getElementById('selectComparisonDay').value;
+
+  // 2) Filtra por departamento Ecom/​Retail **E** (opcionalmente) pelo dia
+  let dataEcom   = storedData.filter(e => e.department === "Ecom");
+  let dataRetail = storedData.filter(e => e.department === "Retail");
+
+  if (selectedDay) {
+    dataEcom   = dataEcom.filter(e => e.date === selectedDay);
+    dataRetail = dataRetail.filter(e => e.date === selectedDay);
+  }
+
+  // 3) Continua filtragem atual por tarefas selecionadas
+  const filterEcomFunc = (selectedEcomTasks.length === 0)
+    ? (() => true)
+    : (entry => selectedEcomTasks.includes(entry.task));
+  const filterRetailFunc = (selectedRetailTasks.length === 0)
+    ? (() => true)
+    : (entry => selectedRetailTasks.includes(entry.task));
+
+  const filteredEcomData   = dataEcom.filter(filterEcomFunc);
+  const filteredRetailData = dataRetail.filter(filterRetailFunc);
+
+        function buildComparison(deptData) {
+          const consumedByDay = {};
+          const plannedByDay  = {};
+
+          deptData.forEach(e => {
+            const key = `${e.task}|${e.date}`;
+            const [h = 0, m = 0, s = 0] = (e.totalHoursFormatted || "00:00:00").split(":").map(Number);
+            consumedByDay[key] = (consumedByDay[key] || 0) + (h * 3600 + m * 60 + s);
+
+            if (!(key in plannedByDay)) {
+              const plannedDec = (plannedHoursTracker[e.task] || {})[e.date];
+              plannedByDay[key] = plannedDec != null ? plannedDec * 3600 : 0;
+            }
+          });
+
+          const allTasks = Array.from(new Set(Object.keys(consumedByDay).map(k => k.split("|")[0])));
+          const dataArr = allTasks.map(task => {
+            let sumConsumed = 0, sumPlanned = 0;
+            Object.keys(consumedByDay).forEach(k => {
+              if (k.startsWith(task + "|")) {
+                sumConsumed += consumedByDay[k];
+                sumPlanned  += plannedByDay[k] || 0;
+              }
+            });
+            return { task, consumed: sumConsumed, planned: sumPlanned };
+          });
+
+          dataArr.sort((a, b) => b.consumed - a.consumed);
+          return dataArr;
+        }
+
+        const ecomArr   = buildComparison(filteredEcomData);
+        const retailArr = buildComparison(filteredRetailData);
+
+        function chartConfig(arr) {
+  return {
+    type: "bar",
+    data: {
+      labels: arr.map(d => d.task),
+      datasets: [
+        {
+          label: "Consumed",
+          data: arr.map(d => (d.consumed / 3600)),
+          backgroundColor: "#007acc"
+        },
+        {
+          label: "Planned",
+          data: arr.map(d => (d.planned / 3600)),
+          backgroundColor: "#26a269"
+        }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { display: true, position: "top" },
+        tooltip: { /* … seu callback existente … */ },
+        datalabels: {
+          display: true,
+          anchor: "end",    // "end" coloca no topo da barra
+          align: "end",     // "end" alinha a label logo acima (fora) da barra
+          rotation: -90,      // texto horizontal
+          font: {
+            weight: "normal",
+            size: 9
+          },
+          color: "#717171",
+          formatter: value => {
+            const totalSec = Math.round(value * 3600);
+            const hh = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+            const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+            return `${hh}:${mm}`;
+          }
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 90,
+            minRotation: 90,
+            callback: v => arr[v]?.task || "",
+            font: { size: 12 }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Hours" },
+          ticks: {
+            callback: v => {
+              const totalSec = Math.round(v * 3600);
+              const hh = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+              const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+              return `${hh}:${mm}`;
+            }
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  };
+}
+      // —–– ECOM CHART COM ONCLICK —––
+const ecomCtx = document
+  .getElementById("ecomComparisonChart")
+  .getContext("2d");
+
+const ecomConfig = chartConfig(ecomArr);
+
+/* agora o gráfico de detalhe abre apenas
+   quando o utilizador CLICA na barra */
+ecomConfig.options.onClick = function (event, elements) {
+  if (elements.length) {
+    const idx  = elements[0].index;
+    const task = this.data.labels[idx];
+    showDailyDetail(task);
+  }
+};
+
+window.ecomComparisonChartObj = new Chart(ecomCtx, ecomConfig);
+
+
+      // —–– RETAIL CHART COM ONCLICK —––
+const retailCtx = document
+  .getElementById("retailComparisonChart")
+  .getContext("2d");
+
+const retailConfig = chartConfig(retailArr);
+
+/* o detalhe abre apenas quando o utilizador CLICA na barra */
+retailConfig.options.onClick = function (event, elements) {
+  if (elements.length) {
+    const idx  = elements[0].index;
+    const task = this.data.labels[idx];
+    showDailyDetail(task);
+  }
+};
+
+window.retailComparisonChartObj = new Chart(retailCtx, retailConfig);
+
+    }  // ← fecha renderComparisonCharts()
+
+// ── Funções de Drill-down Diário ──
+function showDailyDetail(task) {
+  // 1) Atualiza o título do modal para o nome da task clicada
+  document.getElementById('dailyDetailTitle').textContent = task;
+
+  // 2) filtra só os registros daquele task
+  const data = storedData.filter(e => e.task === task);
+
+  // 3) agrupa por dia
+  const byDay = {};
+  data.forEach(e => {
+    byDay[e.date] = byDay[e.date] || { consumed: 0, planned: 0 };
+    const [h, m, s] = e.totalHoursFormatted.split(':').map(Number);
+    byDay[e.date].consumed += h * 3600 + m * 60 + s;
+    const pd = (plannedHoursTracker[task] || {})[e.date] || 0;
+    byDay[e.date].planned   = pd * 3600;
+  });
+
+  // 4) prepara arrays de labels e valores
+  const labels = Object.keys(byDay).sort((a, b) => {
+    const [da, ma, ya] = a.split('/').map(Number);
+    const [db, mb, yb] = b.split('/').map(Number);
+    return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+  });
+  const consumed = labels.map(d => byDay[d].consumed / 3600);
+  const planned  = labels.map(d => byDay[d].planned / 3600);
+
+  // 5) renderiza no canvas
+  const ctx = document.getElementById('dailyDetailChart').getContext('2d');
+  if (window.dailyDetailChartObj) window.dailyDetailChartObj.destroy();
+ window.dailyDetailChartObj = new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      { label: 'Consumed', data: consumed },
+      { label: 'Planned',  data: planned  }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+
+    /* ─── ⬇️  NOVO bloco datalabels  ⬇️ ─── */
+    plugins: {
+      legend: { position: 'top' },
+
+      datalabels: {
+        display: true,           // sempre visível no gráfico-hover
+        anchor : 'center',
+        align  : 'center',
+        font   : { weight: 'normal', size: 10 },
+        color  : '#5C5C5C',       // branco dentro da barra
+        formatter: v => {
+          const totalSec = Math.round(v * 3600);
+          const hh = String(Math.floor(totalSec / 3600)).padStart(2,'0');
+          const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2,'0');
+          return `${hh}:${mm}`;   // HH:MM elegante
+        }
+      }
+    },
+    /* ───────────────────────────────────── */
+
+    scales: { /* … mantém … */ }
+  },
+  plugins: [ChartDataLabels]       // garante que o plugin esteja ativo aqui
+});
+
+
+  // 6) abre modal
+  document.getElementById('dailyDetailModal').style.display = 'flex';
+}
+
+function closeDailyDetail() {
+  document.getElementById('dailyDetailModal').style.display = 'none';
+}
+// ── botão fecha o modal de detalhe diário
+document
+  .getElementById('closeDailyDetailBtn')
+  .addEventListener('click', closeDailyDetail);
+
+
+      function setActive(elements, activeClass, activeElement) {
+        elements.forEach(el => el.classList.remove(activeClass));
+        activeElement.classList.add(activeClass);
+      }
+     function getCustomWeekNumber(d) {
+  // 1) Normaliza para meia‐noite (evita efeitos de hora de verão/fuso)
+  const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  // 2) Encontra o domingo daquela semana
+  const day = dt.getDay();             // 0=domingo, …, 6=sábado
+  const sunday = new Date(dt);
+  sunday.setDate(dt.getDate() - day);
+
+  // 3) Calcula ISO‐week do domingo
+  const isoDate = new Date(Date.UTC(
+    sunday.getFullYear(),
+    sunday.getMonth(),
+    sunday.getDate()
+  ));
+  // transita para quinta‐feira da mesma semana ISO:
+  isoDate.setUTCDate(isoDate.getUTCDate() + 4 - (isoDate.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(isoDate.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(
+    (
+      (isoDate - yearStart) / 86400000   // dif em dias
+      + 1
+    ) / 7
+  );
+  return weekNo;
+}
+
+function parseCSV(text) {
+        const rows = text.trim().split('\n');
+        const result = [];
+        for (const row of rows) {
+          const columns = row.split(',');
+          if (columns[0].toLowerCase().includes("employee")) continue;
+
+          let firstPart    = columns[0].trim().replace(/^"|"$/g, '');
+          let secondPart   = columns[1].trim().replace(/^"|"$/g, '');
+          let employee     = firstPart + ' ' + secondPart;
+          if (firstPart.toLowerCase().startsWith('extra')) employee = 'Extra ' + secondPart;
+          else if (firstPart.toLowerCase().startsWith('247')) employee = '247 ' + secondPart;
+          const personNumber = columns[2].trim();
+
+          const [day, month, year] = columns[3].trim().split('/').map(Number);
+          const dateObj   = new Date(year, month - 1, day);
+          const week      = getCustomWeekNumber(dateObj);
+          const monthName = dateObj.toLocaleString('default', { month: 'long' });
+
+          let rawLabourAccount = (columns[5]||'').trim();
+          let labourAccount = rawLabourAccount.includes("DSC/GB_1725")
+            ? (rawLabourAccount.match(/(\d{6}).*\/(\d{4})/)||[])[1] +
+              (rawLabourAccount.match(/(\d{6}).*\/(\d{4})/)||[])[2]
+            : rawLabourAccount.replace(/\/+/g, '');
+
+          // ─── Departamento original pelo prefixo ───
+let department = '';
+if (labourAccount.startsWith('100765')) {
+  department = 'Ecom';
+} else if (labourAccount.startsWith('100768')) {
+  department = 'Retail';
+} else if (labourAccount.startsWith('100666')) {
+  department = 'IT';
+}
+// (se não for nenhum desses, department fica '')
+
+
+
+// se veio sem conta E SEM departamento válido, ignora a linha
+if ((!labourAccount || labourAccount.toUpperCase() === 'N/A') &&
+    (!department    || department.toUpperCase() === 'N/A')) {
+  continue;
+}
+
+// ─── Estilo da labourAccount (vazia = erro) ───
+let labourAccountStyle = '';
+if (!labourAccount) {
+  labourAccount      = 'Missing Code';
+  labourAccountStyle = 'color:red;font-weight:bold;';
+}
+
+// ─── Task + estilo ─────────────────────────────────────────
+let taskStyle = '';
+let task;
+
+const codeSuffix = labourAccount.slice(-4);
+// ─── Flag para indicar Paid Break ───
+const isBreak = codeSuffix === '4010';
+
+if (codeSuffix === '0000') {
+  /*  ▸ Prefixo conforme o departamento já detetado ─────────── */
+  const depPrefix =
+          department === 'Ecom'   ? 'E.'
+        : department === 'Retail' ? 'R.'
+        : 'U.';                       // U. = Unknown / outros
+
+  task      = `${depPrefix}Missing Task-${codeSuffix}`;
+  taskStyle = 'color:red;font-weight:bold;';
+} else {
+  const baseTask = taskMapping[labourAccount] ||
+                   (isBreak ? 'Paid Break' : 'N/A');
+  task = `${baseTask}-${codeSuffix}`;
+}
+
+
+         const isManager = managersList.some(m => m.personNumber === personNumber);
+          const role      = isManager ? 'Manager' : 'Operative';
+
+          const totalHoursFormatted = String(columns[6] || '00:00:00')
+            .trim()
+            .replace(/"/g, '');
+
+          const rawPayCode = columns[columns.length - 1].trim().replace(/^"|"$/g, '');
+          const payCode    = rawPayCode;
+
+          result.push({
+            employee,
+            personNumber,
+            role,
+            date: dateObj.toLocaleDateString('en-GB'),
+            week,
+            month: monthName,
+            labourAccount,
+            department,
+            task,
+            taskStyle,
+            dayOfWeek: dateObj.getDay(),
+            labourAccountStyle,
+            totalHoursFormatted,
+            payCode
+          });
+        }
+        return result;
+      }
+
+      function aggregateData(data) {
+        return data;
+      }
+    function addDataToStorage(newData) {
+  // 1) Descobre todas as datas presentes no novo CSV
+  const datesInNew = [...new Set(newData.map(e => e.date))];
+  
+  // 2) Remove do storedData tudo que tenha essas datas (substitui)
+  storedData = storedData.filter(e => !datesInNew.includes(e.date));
+  
+  // 3) Adiciona TODOS os registros do novo CSV
+  storedData.push(...newData);
+  
+  // 4) Persiste
+  localStorage.setItem('csvData', JSON.stringify(storedData));
+}
+      function processFile() {
+  const fileInput = document.getElementById('fileInput');
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('Please select a file.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const text = event.target.result;
+    const newData = parseCSV(text);
+    addDataToStorage(newData);
+
+    const aggregatedData = aggregateData(storedData);
+    displayResults(aggregatedData);
+    updateTotalHours(aggregatedData);
+    updateFilteredTotals(aggregatedData);
+    updateResult();
+
+    populateDropdowns();
+    populatePayCodeDropdown();
+    populateComparisonTaskFilters();
+
+    // ──> NOVO: preenche o dropdown de dias do Comparison Panel
+    populateComparisonDayDropdown();
+    // e já redesenha os gráficos com as datas atualizadas
+    renderComparisonCharts();
+
+    fileInput.value = '';
+    fileInput.style.backgroundColor = '#ccc';
+
+    displayBudgetOverview();
+    if (document.getElementById('dashboard').classList.contains('active')) {
+      renderDashboard();
+    }
+  };
+  reader.readAsText(file);
+}
+
+
+      function updateMissingTaskCount() {
+  const rows = document.querySelectorAll("#resultTable tbody tr");
+  let missing = 0;
+  rows.forEach(row => {
+    if (getComputedStyle(row).display !== 'none') {
+      const taskText = row.querySelector("td:nth-child(9)").textContent.trim();
+      // conta E.Missing Task-0000 e R.Missing Task-0000
+      if (taskText.endsWith("Missing Task-0000")) missing++;
+    }
+  });
+  const span = document.getElementById("missingTaskCount");
+  span.textContent = missing;
+  span.style.color = missing > 0 ? "#ff8c00" : "#333";
+}
+
+
+      function displayResults(data) {
+        const tbody = document.querySelector('#resultTable tbody');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No results found</td></tr>';
+          updateHeadcount();
+          updateMissingTaskCount();
+          return;
+        }
+        const rows = data.map(entry => `
+          <tr>
+            <td>${entry.employee}</td>
+            <td>${entry.personNumber}</td>
+            <td>${entry.role}</td>
+            <td>${entry.date}</td>
+            <td>${entry.week}</td>
+            <td>${entry.month}</td>
+            <td>${entry.labourAccountStyle
+                  ? `<span style="${entry.labourAccountStyle}">${entry.labourAccount}</span>`
+                  : entry.labourAccount}</td>
+            <td>${entry.department || ''}</td>
+            <td>${entry.taskStyle
+                  ? `<span style="${entry.taskStyle}">${entry.task}</span>`
+                  : entry.task || 'N/A'}</td>
+            <td>${
+              (() => {
+                const [h = 0, m = 0, s = 0] = (entry.totalHoursFormatted || '00:00:00').split(':').map(Number);
+                const totalSec = h * 3600 + m * 60 + s;
+                return formatTime(totalSec);
+              })()
+            }</td>
+            <td>${entry.payCode || ''}</td>
+          </tr>
+        `).join('');
+        tbody.innerHTML = rows;
+        updateHeadcount();
+        updateMissingTaskCount();
+      }
+
+     function updateTotalHours(data) {
+  let totalMinutes = 0, ecomMinutes = 0, retailMinutes = 0, breakMinutes = 0, loggedMinutes = 0;
+  grossMinutes = 0;
+  data.forEach(entry => {
+    const [hours = 0, minutes = 0, seconds = 0] = (entry.totalHoursFormatted || '00:00:00')
+      .split(':')
+      .map(Number);
+    const entrySeconds = hours * 3600 + minutes * 60 + seconds;
+    grossMinutes       += entrySeconds;
+    if (entry.department) {
+      totalMinutes    += entrySeconds;
+      if (entry.department === 'Ecom')    ecomMinutes    += entrySeconds;
+      else if (entry.department === 'Retail') retailMinutes += entrySeconds;
+      else if (entry.department === 'Break')  breakMinutes  += entrySeconds;
+      if (entry.task && entry.task !== 'N/A') loggedMinutes  += entrySeconds;
+    }
+  });
+  document.getElementById('grossHours').textContent = formatTime(grossMinutes);
+  document.getElementById('loggedHours').textContent = formatTime(loggedMinutes);
+  document.getElementById('totalBreak').textContent  = formatTime(breakMinutes);  // ← exibe
+  // diferença entre horas brutas e logadas
+  const diffSeconds = grossMinutes - loggedMinutes;
+  document.getElementById('depTotalHours').textContent = formatTime(diffSeconds);
+
+  // se quiser manter totalMinutes para outras lógicas, guarde-o; senão remova
+  originalTotalMinutes = diffSeconds;
+
+  if (grossMinutes > loggedMinutes) {
+    document.getElementById('loggedHours').style.color = "#ff8c00";
+  } else {
+    document.getElementById('loggedHours').style.color = "";
+  }
+  document.getElementById('totalEcom').textContent = formatTime(ecomMinutes);
+  document.getElementById('totalRetail').textContent = formatTime(retailMinutes);
+  document.getElementById('totalBreak').textContent = formatTime(breakMinutes);
+  originalTotalMinutes = totalMinutes;
+  updateResult();
+  const unloggedSpan = document.getElementById('depTotalHours');
+  if (unloggedSpan.textContent === '00:00:00') {
+    unloggedSpan.style.color = 'green';
+    unloggedSpan.textContent = '00:00:00';
+  } else {
+    unloggedSpan.style.color = 'red';
+    unloggedSpan.textContent = '+' + unloggedSpan.textContent.replace('-', '');
+  }
+}
+
+function updatePlannedLabel() {
+  const label = document.getElementById('plannedLabel');
+  label.textContent = 'Planned Hours';
+}
+
+function displayBudgetOverview() {
+  updatePlannedLabel();
+
+  // 1) Lê o filtro de task
+  const filterValue = document.getElementById('modalTaskFilter').value.toLowerCase();
+
+  // 2) Monta o overview[task][date] = totalSeconds
+  //    ↳ agora respeita o department activo
+  const aggregatedData = aggregateData(storedData);
+
+  const aggregatedDataFiltered =
+        currentDepartmentFilter === 'All'
+      ? aggregatedData
+      : aggregatedData.filter(entry => {
+          if (currentDepartmentFilter === 'Break') {
+            return entry.labourAccount.endsWith('4010') ||
+                   /break/i.test(entry.task.toLowerCase());
+          }
+          return entry.department === currentDepartmentFilter;
+        });
+
+  const overview = {};
+  aggregatedDataFiltered.forEach(entry => {
+    const tsk = entry.task;
+    const dateKey = entry.date;
+    if (!overview[tsk])          overview[tsk] = {};
+    if (!overview[tsk][dateKey]) overview[tsk][dateKey] = 0;
+    const [h=0,m=0,s=0] = (entry.totalHoursFormatted || '00:00:00').split(':').map(Number);
+    overview[tsk][dateKey] += h*3600 + m*60 + s;
+  });
+
+  // 3) Gera sempre as 7 datas (domingo→sábado) da semana corrente
+let dates = [];
+if (aggregatedDataFiltered.length) {
+  const firstRow = aggregatedDataFiltered[0];
+  const weekNum  = firstRow.week;
+  const [, , yy] = firstRow.date.split('/').map(Number);
+  const [weekStart, weekEnd] = getWeekRange(yy, weekNum);
+  for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
+    dates.push(d.toLocaleDateString('en-GB'));
+  }
+}
+
+
+  // 4) Soma apenas as tasks que passam no filtro
+  const tasksToSum = Object.keys(overview)
+    .filter(tsk => filterValue === '' || tsk.toLowerCase().includes(filterValue));
+
+  let sumConsumed = 0;
+  let sumPlannedSeconds = 0;
+
+  tasksToSum.forEach(tsk => {
+    dates.forEach(dateKey => {
+      // consumo real
+      const consumedSec = overview[tsk]?.[dateKey] || 0;
+      sumConsumed += consumedSec;
+      // planned por dia
+      const pd = plannedHoursTracker[tsk]?.[dateKey];
+      if (pd != null) sumPlannedSeconds += pd * 3600;
+    });
+  });
+
+  // ─── NOVO BLOCO (logo após somar sumConsumed e sumPlannedSeconds) ───
+  // 5.0) Soma TOTAL de todos os budgets (em segundos)
+  const sumBudgetSeconds = tasksToSum.reduce((sum, tsk) => {
+    const bd = plannedHoursTracker[tsk]?.budget;
+    return sum + (bd != null ? bd * 3600 : 0);
+  }, 0);
+  // ───────────────────────────────────────────────────────────────────
+
+  // 5) Atualiza os rótulos dinâmicos de KPI
+  document.getElementById('totalConsumed').textContent = formatTime(sumConsumed);
+  document.getElementById('totalPlanned').textContent  = formatTimeHHMM(sumPlannedSeconds);
+
+  // 5.1) Calcula e atualiza o Planned Diff.
+  const diffSec  = sumConsumed - sumPlannedSeconds;
+  const absDiff  = Math.abs(diffSec);
+  const diffSign = diffSec > 0 ? '+' : '-';
+  const diffText = `${diffSign}${formatTime(absDiff)}`;
+  const diffEl   = document.getElementById('totalDifference');
+  diffEl.textContent      = diffText;
+  diffEl.style.color      = diffSec > 0 ? 'red' : 'green';
+  diffEl.style.fontWeight = 'bold';
+
+  // 5.2) Budget Diff. = sumConsumed – sumBudgetSeconds
+const budgetDiffSec = sumConsumed - sumBudgetSeconds;
+const budgetDiffEl  = document.getElementById('totalBudgetDifference');
+// sempre mostrar "+" se valor >= 0
+budgetDiffEl.textContent = (budgetDiffSec >= 0 ? '+' : '-') + formatTime(Math.abs(budgetDiffSec));
+// mesma cor do Planned Diff. (vermelho se excedeu, verde se dentro)
+budgetDiffEl.style.color      = budgetDiffSec > 0 ? 'red' : 'green';
+// mesmo peso de fonte
+budgetDiffEl.style.fontWeight = 'bold';
+
+// 5.3) Budget Total = soma de todos os budgets lançados
+const totalBudgetEl = document.getElementById('totalBudget');
+totalBudgetEl.textContent     = formatTimeHHMM(sumBudgetSeconds);
+// deixa em negrito igual às outras labels
+totalBudgetEl.style.fontWeight = 'bold';
+// copia a cor do elemento totalPlanned (normalmente é padrão, ou ajuste à sua paleta)
+totalBudgetEl.style.color      = window.getComputedStyle(
+  document.getElementById('totalPlanned')
+).color;
+
+  // ───────────────────────────────────────────────────────────
+
+  // 6) Monta o pivô semanal (cabeçalho + corpo) — continua como antes…
+  const table = document.getElementById('budgetTable');
+  const thead = table.querySelector('thead');
+  const tbody = table.querySelector('tbody');
+  const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+
+
+  // 6.1) Header em 2 linhas
+thead.innerHTML = '';
+const headerRow1 = document.createElement('tr');
+const thTask     = document.createElement('th');
+thTask.rowSpan   = 2;
+thTask.textContent = 'Task';
+headerRow1.appendChild(thTask);
+
+// existing date‐columns
+dates.forEach(dateKey => {
+  const [d,m,y] = dateKey.split('/');
+  const lbl     = `${d}-${m}-${y.slice(-2)}`;
+  const dow     = dayNames[new Date(`${y}-${m}-${d}`).getDay()];
+  const th      = document.createElement('th');
+  th.colSpan    = 3;
+  th.innerHTML  = `${lbl}<br>${dow}`;
+  headerRow1.appendChild(th);
+});
+
+// ── NOVO: coluna Budget ──
+const thBudget = document.createElement('th');
+thBudget.rowSpan    = 2;
+thBudget.textContent = 'Budget';
+headerRow1.appendChild(thBudget);
+
+thead.appendChild(headerRow1);
+
+const headerRow2 = document.createElement('tr');
+dates.forEach(() => {
+  ['Consumed','Planned','Diff.'].forEach(txt => {
+    const th = document.createElement('th');
+    th.textContent = txt;
+    headerRow2.appendChild(th);
+  });
+});
+thead.appendChild(headerRow2);
+
+
+  // 6.2) Corpo da tabela
+tbody.innerHTML = '';
+Object.keys(overview)
+  .filter(tsk => filterValue === '' || tsk.toLowerCase().includes(filterValue))
+  .sort()
+  .forEach(tsk => {
+    const tr = document.createElement('tr');
+    // Task
+    const tdTask = document.createElement('td');
+    tdTask.textContent = tsk;
+    tr.appendChild(tdTask);
+
+    // Vamos acumular aqui o total consumido na semana
+    let weekConsumedSec = 0;
+
+    // Para cada dia: Consumed | Planned | Diff.
+    dates.forEach(dateKey => {
+      const consumedSec = overview[tsk][dateKey] || 0;
+      weekConsumedSec  += consumedSec;                // acumula
+
+      const plannedDec  = (plannedHoursTracker[tsk] || {})[dateKey] || 0;
+      const plannedSec  = plannedDec * 3600;
+      const diffDaySec  = consumedSec - plannedSec;
+
+      // Consumed
+      const tdC = document.createElement('td');
+      tdC.textContent     = formatTime(consumedSec);
+      tdC.style.textAlign = 'right';
+      tdC.style.fontSize  = '0.85rem';
+      tr.appendChild(tdC);
+
+      // Planned
+      const tdP = document.createElement('td');
+      tdP.textContent     = formatTime(plannedSec);
+      tdP.style.textAlign = 'right';
+      tdP.style.fontSize  = '0.85rem';
+      tr.appendChild(tdP);
+
+      // Diff.
+      const tdD = document.createElement('td');
+      const arrow    = diffDaySec > 0 ? '▼ ' : diffDaySec < 0 ? '▲ ' : '';
+      const sign     = diffDaySec > 0 ? '-' : '';
+      const diffTxt  = `${sign}${formatTime(Math.abs(diffDaySec))}`;
+      tdD.textContent      = `${arrow}${diffTxt}`;
+      tdD.style.color      = diffDaySec > 0 ? 'red' : 'green';
+      tdD.style.fontWeight = 'bold';
+      tdD.style.fontSize   = '0.85rem';
+      tdD.title            = `${formatTime(consumedSec)} – ${formatTime(plannedSec)}`;
+      if (Math.abs(diffDaySec) > 2 * 3600) tdD.style.background = '#ffe6e6';
+      tr.appendChild(tdD);
+    });
+
+    // ── NOVO: célula Budget Restante com seta ──
+const budgetDec = (plannedHoursTracker[tsk]?.budget) || 0;
+const budgetSec = budgetDec * 3600;
+// subtrai o total consumido na semana
+const remainSec = budgetSec - weekConsumedSec;
+// escolhe a seta conforme sobra ou estoura
+const arrow     = remainSec > 0  ? '▲ '  // ainda sobra
+                 : remainSec < 0  ? '▼ '  // ultrapassou
+                 : '';                  // exato
+// formata HH:MM
+const hRem       = Math.floor(Math.abs(remainSec) / 3600);
+const mRem       = Math.round((Math.abs(remainSec) % 3600) / 60);
+const remainText = `${arrow}${String(hRem).padStart(2,'0')}:${String(mRem).padStart(2,'0')}`;
+
+const tdB = document.createElement('td');
+tdB.textContent      = remainText;
+tdB.style.textAlign  = 'right';
+tdB.style.fontWeight = 'bold';
+tdB.style.color      = remainSec < 0 ? 'red' : 'green';
+// fonte menor só na coluna Budget
+tdB.style.fontSize   = '0.86rem';
+
+tr.appendChild(tdB);
+tbody.appendChild(tr);
+
+  });
+}
+
+function filterTable() {
+  const employeeFilter      = document.getElementById('employeeFilter').value.toLowerCase();
+  const taskFilter          = document.getElementById('taskFilter').value.toLowerCase();
+  const labourAccountFilter = document.getElementById('labourAccountFilter').value.toLowerCase();
+  const payCodeFilter       = document.getElementById('payCodeFilter').value.toLowerCase();
+  const weekFilter          = document.getElementById('selectWeek').value;
+  const monthFilter         = document.getElementById('selectMonth').value;
+  const codeFilter          = document.getElementById('codeFilter').value;
+  const dateFilter          = document.getElementById('dateFilter').value;
+
+  const rows = document.querySelectorAll('#resultTable tbody tr');
+
+  let grossSeconds  = 0,
+      loggedSeconds = 0,
+      filteredData  = [];
+
+  rows.forEach(row => {
+    const cells = row.getElementsByTagName('td');
+
+    const employeeText      = cells[0].textContent.toLowerCase();
+    const roleText          = cells[2].textContent.trim();
+    const dateText          = cells[3].textContent.trim();
+    const taskText          = cells[8].textContent.trim();
+    const labourAccountText = cells[6].textContent.toLowerCase();
+    const payCodeText       = cells[10].textContent.toLowerCase();
+    const weekText          = cells[4].textContent;
+    const monthText         = cells[5].textContent;
+    const hoursText         = cells[9].textContent;
+
+    /* ──────────── filtros “normais” ──────────── */
+    let show =
+      employeeText.includes(employeeFilter) &&
+      labourAccountText.includes(labourAccountFilter) &&
+      taskText.toLowerCase().includes(taskFilter);
+
+    if (payCodeFilter && payCodeText !== payCodeFilter) show = false;
+    if (weekFilter    && weekText    !== weekFilter)    show = false;
+    if (monthFilter   && monthText   !== monthFilter)   show = false;
+
+    /* ─────────── filtro por departamento ─────────── */
+    if (currentDepartmentFilter && currentDepartmentFilter !== 'All') {
+
+      if (currentDepartmentFilter === 'Break') {
+        // Break agora não vem mais na coluna Dep., então:
+        const isBreakRow =
+          labourAccountText.endsWith('4010') ||      // LA termina em 4010
+          taskText.toLowerCase().includes('paid break');
+
+        if (!isBreakRow) show = false;
+
+      } else {
+        const deptText = cells[7].textContent;       // Ecom / Retail / IT …
+        if (deptText !== currentDepartmentFilter) show = false;
+      }
+    }
+
+    /* ─────────── filtros adicionais ─────────── */
+    if (codeFilter === 'manager'     && roleText !== 'Manager')    show = false;
+    if (codeFilter === 'operative'   && roleText !== 'Operative')  show = false;
+    if (codeFilter === 'missingTask' && !taskText.endsWith('Missing Task-0000')) show = false;
+
+    if (dateFilter) {
+      const [d, m, y] = dateText.split('/');
+      const isoDate    = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+      if (isoDate !== dateFilter) show = false;
+    }
+
+    /* ─────────── mostra / esconde a linha ─────────── */
+    row.style.display = show ? '' : 'none';
+
+    /* ─────────── acumula totais ─────────── */
+    if (show && hoursText && hoursText !== 'N/A') {
+      const [h = 0, m = 0, s = 0] = hoursText.split(':').map(Number);
+      const secs  = h * 3600 + m * 60 + s;
+      grossSeconds += secs;
+
+      if (taskText.toLowerCase() !== 'n/a') {
+        loggedSeconds += secs;
+        filteredData.push({
+          department: cells[7].textContent.toLowerCase(),
+          totalHoursFormatted: hoursText
+        });
+      }
+    }
+  });
+
+  /* ─────────── KPI’s na parte de cima ─────────── */
+  document.getElementById('grossHours').textContent  = formatTime(grossSeconds);
+  document.getElementById('loggedHours').textContent = formatTime(loggedSeconds);
+
+  const diffSec   = grossSeconds - loggedSeconds;
+  const absDiff   = Math.abs(diffSec);
+  const unloggedEl = document.getElementById('depTotalHours');
+  unloggedEl.textContent = (diffSec === 0 ? '' : diffSec > 0 ? '+' : '-') + formatTime(absDiff);
+  unloggedEl.style.color = diffSec === 0 ? 'green' : 'red';
+
+  /* …cálculos dos totais… */
+
+// ======================= NOVO BLOCO =======================
+// Guarda num cache global (`window.filteredRowsCache`) todos os
+// registos que estão visíveis na tabela – já respeitando todos
+// os filtros aplicados na aba Home.
+window.filteredRowsCache = [];
+rows.forEach(row => {
+  if (row.style.display !== 'none') {
+    const cells = row.getElementsByTagName('td');
+    window.filteredRowsCache.push({
+      employee           : cells[0].textContent.trim(),
+      personNumber       : cells[1].textContent.trim(),
+      role               : cells[2].textContent.trim(),
+      date               : cells[3].textContent.trim(),   // DD/MM/YYYY
+      week               : cells[4].textContent.trim(),
+      month              : cells[5].textContent.trim(),
+      labourAccount      : cells[6].textContent.trim(),
+      department         : cells[7].textContent.trim(),
+      task               : cells[8].textContent.trim(),
+      totalHoursFormatted: cells[9].textContent.trim(),
+      payCode            : cells[10].textContent.trim()
+    });
+  }
+});
+// ==========================================================
+
+updateFilteredTotals(filteredData);
+updateHeadcount();
+  updateMissingTaskCount();
+
+// ------------------ NOVO BLOCO (Passo 5) ------------------
+  if (document.getElementById('dashboard').classList.contains('active')) {
+    renderDashboard();
+  }
+// ----------------------------------------------------------
+}
+// ======================= NOVO BLOCO (helper) =======================
+// Retorna as linhas actualmente visíveis (se houver filtros activos);
+// caso contrário devolve o array completo `storedData`.  Usado pelo
+// Dashboard para que os KPI e gráficos reflitam exactamente o que o
+// utilizador está a ver na aba Home.
+function getFilteredData() {
+  return (window.filteredRowsCache && window.filteredRowsCache.length)
+           ? window.filteredRowsCache
+           : storedData;
+}
+// ==================================================================
+
+      function updateFilteredTotals(filteredData) {
+        let ecomMinutes    = 0,
+            retailMinutes  = 0,
+            breakMinutes   = 0;
+        filteredData.forEach(entry => {
+          const [h = 0, m = 0, s = 0] = entry.totalHoursFormatted.split(':').map(Number);
+          const entrySeconds = h * 3600 + m * 60 + s;
+          if (entry.department === 'ecom')     ecomMinutes   += entrySeconds;
+          else if (entry.department === 'retail')  retailMinutes += entrySeconds;
+          else if (entry.department === 'break')   breakMinutes  += entrySeconds;
+        });
+        document.getElementById('totalEcom').textContent   = formatTime(ecomMinutes);
+        document.getElementById('totalRetail').textContent = formatTime(retailMinutes);
+        document.getElementById('totalBreak').textContent  = formatTime(breakMinutes);
+      }
+
+      function updateResult() {
+  const plannedBudget = parseFloat(document.getElementById('budgetInput').value);
+  const resultBox = document.getElementById('resultBox');
+  if (isNaN(plannedBudget)) {
+    resultBox.style.display = 'none';
+    return;
+  }
+
+  // transforma o orçamento (em horas) em segundos
+  const budgetSeconds = plannedBudget * 3600;
+
+  // grossMinutes na verdade está em segundos
+  const remainingSec = budgetSeconds - grossMinutes;
+
+  // calcula horas e minutos absolutos
+  const absSec = Math.abs(remainingSec);
+  const h = Math.floor(absSec / 3600);
+  const m = Math.floor((absSec % 3600) / 60);
+  const sign = remainingSec < 0 ? '-' : '';
+
+  const resultTime = `${sign}${h}:${m.toString().padStart(2, '0')}`;
+
+  // exibe em vermelho se negativo, verde se positivo
+  if (remainingSec < 0) {
+    resultBox.innerHTML = `Result: <span style="color: red; font-weight: bold;">${resultTime}</span>`;
+  } else {
+    resultBox.innerHTML = `Result: <span style="color: green; font-weight: bold;">${resultTime}</span>`;
+  }
+
+  resultBox.style.display = 'block';
+}
+window.updateResult = updateResult;
+
+
+      function toggleResult() {
+        const resultBox = document.getElementById('resultBox');
+        resultBox.style.display = (resultBox.style.display === 'none' || resultBox.style.display === '') ? 'block' : 'none';
+      }
+
+      function clearData() {
+        displayResults([]);
+        document.getElementById('resultBox').innerHTML = '';
+        document.getElementById('grossHours').textContent = '0:00';
+        document.getElementById('loggedHours').textContent = '0:00';
+        document.getElementById('depTotalHours').textContent = '0:00';
+        document.getElementById('totalEcom').textContent = '0:00';
+        document.getElementById('totalRetail').textContent = '0:00';
+        document.getElementById('totalBreak').textContent = '0:00';
+        grossMinutes = 0;
+        originalTotalMinutes = 0;
+      }
+
+      function filterByDate() {
+        const startDateInput = document.getElementById('startDate').value;
+        const endDateInput = document.getElementById('endDate').value;
+        if (!startDateInput || !endDateInput) {
+          alert('Please select both start and end dates.');
+          return;
+        }
+        const startDate = new Date(startDateInput);
+        const endDate = new Date(endDateInput);
+        if (isNaN(startDate) || isNaN(endDate)) {
+          alert('Please enter valid start and end dates.');
+          return;
+        }
+        const filteredData = storedData.filter(entry => {
+          const entryDate = new Date(entry.date.split('/').reverse().join('-'));
+          return entryDate >= startDate && entryDate <= endDate;
+        });
+        const aggregatedData = aggregateData(filteredData);
+        displayResults(aggregatedData);
+        updateTotalHours(aggregatedData);
+        updateFilteredTotals(aggregatedData);
+        updateResult();
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+      }
+
+      function downloadExcelReportBetweenDates() {
+        const startDateInput = document.getElementById('startDate').value;
+        const endDateInput = document.getElementById('endDate').value;
+        if (!startDateInput || !endDateInput) {
+          alert('Please select both start and end dates.');
+          return;
+        }
+        const startDate = new Date(startDateInput);
+        const endDate = new Date(endDateInput);
+        if (isNaN(startDate) || isNaN(endDate)) {
+          alert('Please enter valid start and end dates.');
+          return;
+        }
+        const filteredData = storedData.filter(entry => {
+          const entryDate = new Date(entry.date.split('/').reverse().join('-'));
+          return entryDate >= startDate && entryDate <= endDate;
+        });
+        if (filteredData.length === 0) {
+          alert('No data available for the selected dates.');
+          return;
+        }
+        const wb = XLSX.utils.book_new();
+        const ws_data = [['Employee', 'Person Number', 'Date', 'Week', 'Month', 'Labour Account', 'Dep.', 'Task', 'Total Hours']];
+        filteredData.forEach(entry => {
+          ws_data.push([
+            entry.employee,
+            entry.personNumber,
+            entry.date,
+            entry.week,
+            entry.month,
+            entry.labourAccount,
+            entry.department,
+            entry.task,
+            entry.totalHoursFormatted
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        XLSX.utils.book_append_sheet(wb, ws, "Report");
+        XLSX.writeFile(wb, `budget_tracker_report_${startDateInput}_to_${endDateInput}.xlsx`);
+      }
+
+      // ---------- novo downloadBudgetReport ----------
+function downloadBudgetReport() {
+  /* 1) Seleciona a tabela que está na tela */
+  const table = document.getElementById('budgetTable');
+  if (!table) {
+    alert('Tabela Budget não encontrada na página.');
+    return;
+  }
+
+  /* 2) Converte a tabela HTML → workbook respeitando merges */
+  const wb = XLSX.utils.table_to_book(table, {
+    sheet: 'Budget Report',   // nome da aba dentro do Excel
+    raw  : true               // mantém textos exatamente como estão (ex.: 07:30)
+  });
+
+  /* 3) Faz o download do arquivo */
+  XLSX.writeFile(wb, 'budget_tracker_budget_report.xlsx');
+}
+// ---------- fim ----------
+function populateDropdowns() {
+  const weekDropdown  = document.getElementById('selectWeek');
+  const monthDropdown = document.getElementById('selectMonth');
+  const dateDropdown  = document.getElementById('dateFilter');
+
+  const weeks  = [...new Set(storedData.map(entry => entry.week))];
+  const months = [...new Set(storedData.map(entry => entry.month))];
+  const dates  = [...new Set(storedData.map(entry => entry.date))];
+
+  // Preenche Week
+  weekDropdown.innerHTML = '<option value="">Select Week</option>';
+  weeks.forEach(week => {
+    weekDropdown.innerHTML += `<option value="${week}">Week ${week}</option>`;
+  });
+
+  // Preenche Month
+  monthDropdown.innerHTML = '<option value="">Select Month</option>';
+  months.forEach(month => {
+    monthDropdown.innerHTML += `<option value="${month}">${month}</option>`;
+  });
+
+  // Preenche Date
+  dateDropdown.innerHTML = '<option value="">All</option>';
+  dates
+    .sort((a, b) => {
+      const [da, ma, ya] = a.split('/').map(Number);
+      const [db, mb, yb] = b.split('/').map(Number);
+      return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+    })
+    .forEach(dateStr => {
+      const [d, m, y] = dateStr.split('/');
+      const iso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      dateDropdown.innerHTML += `<option value="${iso}">${dateStr}</option>`;
+    });
+
+  // listeners para filtrar tabela
+  weekDropdown.addEventListener('change', filterTable);
+  monthDropdown.addEventListener('change', filterTable);
+  dateDropdown.addEventListener('change', filterTable);
+
+  // listeners para re-renderizar o dashboard
+  weekDropdown.addEventListener('change', () => {
+    if (document.getElementById('dashboard').classList.contains('active')) {
+      renderDashboard();
+    }
+  });
+  monthDropdown.addEventListener('change', () => {
+    if (document.getElementById('dashboard').classList.contains('active')) {
+      renderDashboard();
+    }
+  });
+  dateDropdown.addEventListener('change', () => {
+    if (document.getElementById('dashboard').classList.contains('active')) {
+      renderDashboard();
+    }
+  });
+}
+
+  window.renderDashboard = function () {
+    let totalConsumedSec    = 0;
+    let totalPlannedSec     = 0;
+    const headcountSet      = new Set();
+    let missingTasks        = 0;
+    const consumedPerWeekSec = {};
+    const plannedPerWeekSec  = {};
+    const deptTotalsSec     = {};
+    const taskTotalsSec     = {};
+    const alreadyCounted    = new Set();
+
+    // === NOVO: lê valores de semana e mês selecionados ===
+    const selectedWeek  = document.getElementById('selectWeek').value;  // ex: "3" ou ""
+    const selectedMonth = document.getElementById('selectMonth').value; // ex: "May" ou ""
+
+    // Filtragem base: por departamento
+    // Filtragem base: por departamento (agora Break também via department)
+let baseData;
+if (currentDepartmentFilter === 'All') {
+  baseData = storedData;
+} else {
+  // para QUALQUER departamento, inclusive 'Break', filtramos pelo campo department
+  baseData = storedData.filter(e => e.department === currentDepartmentFilter);
+}
+
+
+    // === NOVO: aplica filtro por semana, se selecionado ===
+if (selectedWeek !== '') {
+  baseData = baseData.filter(e => String(e.week) === selectedWeek);
+}
+// === NOVO: aplica filtro por mês, se selecionado ===
+if (selectedMonth !== '') {
+  baseData = baseData.filter(e => e.month === selectedMonth);
+}
+
+// ---------- LINHA ALTERADA (Passo 3) ----------
+const dashboardData = getFilteredData();
+// ---------------------------------------------
+
+
+// 1) soma consumido e planned para cada registro filtrado
+dashboardData.forEach(e => {
+  // Consumo
+  const [h = 0, m = 0, s = 0] =
+    (e.totalHoursFormatted || '00:00:00').split(':').map(Number);
+  const consumedSec = h * 3600 + m * 60 + s;
+  totalConsumedSec += consumedSec;
+
+  // Trend por semana
+  const wk = e.week;
+  consumedPerWeekSec[wk] = (consumedPerWeekSec[wk] || 0) + consumedSec;
+
+  // KPIs de headcount, missing, dept e task totals
+  headcountSet.add(`${e.employee}|${e.date}`);
+  if (e.task.endsWith('Missing Task-0000')) missingTasks++;
+  if (e.department)
+    deptTotalsSec[e.department] = (deptTotalsSec[e.department] || 0) + consumedSec;
+  if (e.task && e.task !== 'N/A')
+    taskTotalsSec[e.task] = (taskTotalsSec[e.task] || 0) + consumedSec;
+
+  // Planned só para os dias que aparecem em dashboardData
+  const key = `${e.task}|${e.date}`;
+  if (!alreadyCounted.has(key)) {
+    const plannedDec = (plannedHoursTracker[e.task] || {})[e.date] || 0;
+    const plannedSec = Math.round(plannedDec * 3600);
+    totalPlannedSec += plannedSec;
+    plannedPerWeekSec[wk] = (plannedPerWeekSec[wk] || 0) + plannedSec;
+    alreadyCounted.add(key);
+  }
+});
+
+// 2) soma também os planned em dias SEM consumo, mas só para as mesmas tasks/semana
+const visibleTasks = new Set(dashboardData.map(e => e.task));
+Object.keys(consumedPerWeekSec).forEach(wk => {
+  Object.entries(plannedHoursTracker).forEach(([tsk, datesObj]) => {
+    if (!visibleTasks.has(tsk)) return;
+    Object.entries(datesObj).forEach(([dateKey, dec]) => {
+      if (dateKey === 'budget') return;
+      const [d, m, y] = dateKey.split('/').map(Number);
+      if (getCustomWeekNumber(new Date(y, m - 1, d)) === Number(wk)) {
+        const key2 = `${tsk}|${dateKey}`;
+        if (!alreadyCounted.has(key2)) {
+          const sec = Math.round(dec * 3600);
+          totalPlannedSec += sec;
+          plannedPerWeekSec[wk] = (plannedPerWeekSec[wk] || 0) + sec;
+          alreadyCounted.add(key2);
+        }
+      }
+    });
+  });
+});
+/* ↑ FIM filtro dept planned ↑ */
+
+document.getElementById('kpiConsumed').textContent    = formatTime(totalConsumedSec);
+document.getElementById('kpiPlanned').textContent     = formatTimeHHMM(totalPlannedSec);
+document.getElementById('kpiHeadcount').textContent   = headcountSet.size;
+document.getElementById('kpiMissing').textContent     = missingTasks;
+document.getElementById('kpiMissing').style.color     = '#c1121f';
+
+// ————— Novo: mantém o texto fixo e só adiciona tooltip —————
+const dashboardPlannedLabel = document.getElementById('dashboardPlannedLabel');
+if (dashboardPlannedLabel) {
+  const filtered    = getFilteredData();
+  const uniqueTasks = [...new Set(filtered.map(e => e.task))];
+
+  // 1) sempre mostra "Planned Hours"
+  dashboardPlannedLabel.textContent = 'Planned Hours';
+  // opcional: cursor de help
+  dashboardPlannedLabel.style.cursor = 'help';
+
+  // 2) se houver exatamente UMA task, coloca no title
+  if (uniqueTasks.length === 1) {
+    dashboardPlannedLabel.setAttribute('title', uniqueTasks[0]);
+  } else {
+    dashboardPlannedLabel.removeAttribute('title');
+  }
+}
+// ↑ até aqui ↑
+
+// ... segue a renderização dos gráficos ...
+
+    // ─── TREND CHART ──────────────────────────────────────────────────────────
+if (window.trendChartObj) window.trendChartObj.destroy();
+
+// 1) Semanas presentes no objeto de consumo
+const weeks = Object.keys(consumedPerWeekSec).sort((a, b) => a - b);
+
+// 2) ────────────────────────────────────────────────────────────
+//    Budget Total (teto semanal) — respeita Dept / Week / Month
+// ───────────────────────────────────────────────────────────────
+let totalBudgetHours = 0;
+Object.entries(plannedHoursTracker).forEach(([tsk, plan]) => {
+  // (a) precisa ter budget numérico
+  if (typeof plan.budget !== 'number') return;
+
+  // (b) filtro por Departamento
+  if (currentDepartmentFilter !== 'All') {
+    const isEcom   = tsk.startsWith('E.');
+    const isRetail = tsk.startsWith('R.');
+    const isBreak  = /break/i.test(tsk);
+    if (
+         (currentDepartmentFilter === 'Ecom'   && !isEcom)   ||
+         (currentDepartmentFilter === 'Retail' && !isRetail) ||
+         (currentDepartmentFilter === 'Break'  && !isBreak)
+       ) return;
+  }
+
+  // (c) filtro por Week (dropdown)
+  if (selectedWeek !== '') {
+    const hasWeek = Object.keys(plan).some(dateStr => {
+      if (dateStr === 'budget') return false;
+      const [d, m, y] = dateStr.split('/').map(Number);
+      return String(getCustomWeekNumber(new Date(y, m - 1, d))) === selectedWeek;
+    });
+    if (!hasWeek) return;
+  }
+
+  // (d) filtro por Month (dropdown)
+  if (selectedMonth !== '') {
+    const hasMonth = Object.keys(plan).some(dateStr => {
+      if (dateStr === 'budget') return false;
+      const [, m] = dateStr.split('/');
+      const monthName = new Date(`2024-${m}-01`)
+                          .toLocaleString('default', { month: 'long' });
+      return monthName === selectedMonth;
+    });
+    if (!hasMonth) return;
+  }
+
+  totalBudgetHours += plan.budget;          // já em horas decimais
+});
+
+// ─────────────────────────────────────────────────────────────
+// 3. Budget só das *tasks visíveis* (budgetVisibleHours)
+//    – também respeita Dept / Week / Month / filtros Home
+// ─────────────────────────────────────────────────────────────
+const visibleTasksSet   = new Set(dashboardData.map(e => e.task));
+let   budgetVisibleHours = 0;
+
+visibleTasksSet.forEach(tsk => {
+  const plan = plannedHoursTracker[tsk];
+  if (!plan || typeof plan.budget !== 'number') return;
+
+  /* filtro Week */
+  if (selectedWeek !== '') {
+    const hasWeek = Object.keys(plan).some(dateStr => {
+      if (dateStr === 'budget') return false;
+      const [d, m, y] = dateStr.split('/').map(Number);
+      return String(getCustomWeekNumber(new Date(y, m - 1, d))) === selectedWeek;
+    });
+    if (!hasWeek) return;
+  }
+  /* filtro Month */
+  if (selectedMonth !== '') {
+    const hasMonth = Object.keys(plan).some(dateStr => {
+      if (dateStr === 'budget') return false;
+      const [, m] = dateStr.split('/');
+      const monthName = new Date(`2024-${m}-01`)
+                          .toLocaleString('default', { month: 'long' });
+      return monthName === selectedMonth;
+    });
+    if (!hasMonth) return;
+  }
+
+  budgetVisibleHours += plan.budget;
+});
+
+// ────────────────────────────
+// 4. KPI “Budget Total / Budget (Tasks)”
+// ────────────────────────────
+const hoursToShow     = showBudgetTotal ? totalBudgetHours : budgetVisibleHours;
+const budgetBaseHours = hoursToShow;             // ← baseline único!
+const kpiBudgetTotalEl = document.getElementById('kpiBudgetTotal');
+const kpiBudgetLabelEl = document.getElementById('kpiBudgetLabel');
+
+if (budgetBaseHours === 0) {
+  kpiBudgetTotalEl.textContent = '—';
+  kpiBudgetTotalEl.style.color = '#888';
+} else {
+  kpiBudgetTotalEl.textContent = formatTimeHHMM(budgetBaseHours * 3600);
+  kpiBudgetTotalEl.style.color = showBudgetTotal ? '#004d99' : '#26a269';
+}
+
+kpiBudgetLabelEl.textContent = showBudgetTotal
+  ? 'Budget Total'
+  : 'Budget (Tasks)';
+
+// ────────────────────────────
+// 5. KPI “Budget Remaining”
+// ────────────────────────────
+const budgetRemainingSec = budgetBaseHours * 3600 - totalConsumedSec;
+const kpiBudgetEl        = document.getElementById('kpiBudget');
+
+if (budgetBaseHours === 0) {
+  kpiBudgetEl.textContent = '—';
+  kpiBudgetEl.style.color = '#888';
+} else {
+  const arrow   = budgetRemainingSec >= 0 ? '▲ ' : '▼ ';
+  const absTime = formatTimeHHMM(Math.abs(budgetRemainingSec));
+  kpiBudgetEl.textContent = arrow + absTime;
+  kpiBudgetEl.style.color = budgetRemainingSec >= 0 ? '#26a269' : '#c1121f';
+}
+
+// ────────────────────────────
+// 6. KPI “Budget Utilization”
+// ────────────────────────────
+document.getElementById('kpiUtil').previousElementSibling.textContent = 'Budget Utilization';
+
+const budgetUtilPct = budgetBaseHours > 0
+  ? (totalConsumedSec / (budgetBaseHours * 3600)) * 100
+  : 0;
+
+const utilEl = document.getElementById('kpiUtil');
+utilEl.textContent = budgetUtilPct.toFixed(2) + '%';
+utilEl.style.color = budgetUtilPct <= 100 ? 'green' : 'red';
+
+
+// ────────────────────────────
+// 7. Trend Chart (Consumed × Planned × Budget)
+// ────────────────────────────
+const budgetData = weeks.map(() => budgetVisibleHours);
+const trendCtx   = document.getElementById('trendChart').getContext('2d');
+
+window.trendChartObj = new Chart(trendCtx, {
+  type : 'bar',
+  data : {
+    labels   : weeks.map(w => 'W' + w),
+    datasets : [
+      {
+        label           : 'Consumed',
+        data            : weeks.map(w => consumedPerWeekSec[w] / 3600),
+        backgroundColor : '#007acc'
+      },
+      {
+        label           : 'Planned',
+        data            : weeks.map(w => (plannedPerWeekSec[w] || 0) / 3600),
+        backgroundColor : '#26a269'
+      },
+      {
+        label           : 'Budget',
+        data            : budgetData,
+        backgroundColor : '#f5b041',
+        borderColor     : '#d68910',
+        borderWidth     : 1
+      }
+    ]
+  },
+  options : {
+    responsive          : true,
+    maintainAspectRatio : false,
+    scales : {
+      x : { title : { display : true, text : 'Week' } },
+      y : {
+        beginAtZero : true,
+        title       : { display : true, text : 'Hours' },
+        ticks       : {
+          callback : v => {
+            const sec = Math.round(v * 3600);
+            const hh  = String(Math.floor(sec / 3600)).padStart(2,'0');
+            const mm  = String(Math.floor((sec % 3600) / 60)).padStart(2,'0');
+            return `${hh}:${mm}`;
+          }
+        }
+      }
+    },
+    plugins : {
+      tooltip : {
+        callbacks : {
+          label : ctx => {
+            const sec = Math.round(ctx.parsed.y * 3600);
+            const hh  = String(Math.floor(sec / 3600)).padStart(2,'0');
+            const mm  = String(Math.floor((sec % 3600) / 60)).padStart(2,'0');
+            return `${ctx.dataset.label}: ${hh}:${mm}`;
+          }
+        }
+      },
+      datalabels : {
+  display : true,
+  anchor  : 'end',   // usa o topo da barra
+  align   : 'end',   // alinha bem no limite
+  offset  : -5,      // -2 px gruda; ajuste se quiser 0 ou -4
+  clamp   : true,    // impede sair do canvas
+  font    : { size: 10 },
+  color   : '#5c5c5c',
+  formatter(value) {           // decimal → HH:MM
+    const sec = Math.round(value * 3600);
+    const hh  = String(Math.floor(sec / 3600)).padStart(2,'0');
+    const mm  = String(Math.floor((sec % 3600) / 60)).padStart(2,'0');
+    return `${hh}:${mm}`;
+  }
+}
+
+    }
+  },
+  plugins : [ ChartDataLabels ]
+});
+
+
+
+
+   // dentro do renderDashboard()
+if (window.deptChartObj) window.deptChartObj.destroy();
+const deptKeys = Object.keys(deptTotalsSec);
+const deptCtx = document.getElementById('deptChart').getContext('2d');
+window.deptChartObj = new Chart(deptCtx, {
+  type: 'bar',
+  data: {
+    labels: deptKeys,
+    datasets: [{
+      label: 'Consumed',
+      data: deptKeys.map(k => deptTotalsSec[k] / 3600)
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: {
+          callback: v => {
+            const sec = Math.round(v * 3600);
+            const hh = String(Math.floor(sec / 3600)).padStart(2, '0');
+            const mm = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+            return `${hh}:${mm}`;
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const hoursDecimal = ctx.parsed.x;
+            const totalSec = Math.round(hoursDecimal * 3600);
+            const hh = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+            const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+            return `Consumed: ${hh}:${mm}`;
+          }
+        }
+      },
+      datalabels: {
+        display: true,
+        anchor: 'center',
+        align: 'center',
+        rotation: 0,
+        formatter: value => {
+          const totalSec = Math.round(value * 3600);
+          const hh = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+          const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+          return `${hh}:${mm}`;
+        },
+        font: { size: 10 },    // peso regular (default)
+        color: '#474747'
+      }
+    }
+  },
+  plugins: [ ChartDataLabels ]
+});
+
+
+    if (window.tasksChartObj) window.tasksChartObj.destroy();
+    const sortedEntries = Object.entries(taskTotalsSec).sort((a, b) => b[1] - a[1]);
+    const top5 = sortedEntries.slice(0, 5);
+    const otherSec = sortedEntries.slice(5).reduce((s, [, sec]) => s + sec, 0);
+    const labelsPie = top5.map(([t]) => t);
+    const dataPie   = top5.map(([, sec]) => sec / 3600);
+    if (otherSec > 0) {
+      labelsPie.push('Other');
+      dataPie.push(otherSec / 3600);
+    }
+    const taskCtx = document.getElementById('tasksChart').getContext('2d');
+    window.tasksChartObj = new Chart(taskCtx, {
+      type: 'pie',
+      data: {
+        labels: labelsPie,
+        datasets: [{ data: dataPie }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const v = ctx.parsed;
+                const totalSec = Math.round(v * 3600);
+                const hh = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+                const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+                return `${ctx.label}: ${hh}:${mm}`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const allTasks = Object.entries(taskTotalsSec).sort((a, b) => b[1] - a[1]);
+    const topN = 33;
+    const topTasksBar = allTasks.slice(0, topN);
+    const otherSecBar = allTasks.slice(topN).reduce((s, [, sec]) => s + sec, 0);
+    const barLabels = topTasksBar.map(([t]) => t);
+    const barData   = topTasksBar.map(([, sec]) => sec / 3600);
+    if (otherSecBar > 0) {
+      barLabels.push('Other');
+      barData.push(otherSecBar / 3600);
+    }
+
+    if (window.tasksBarChartObj) window.tasksBarChartObj.destroy();
+    const barCtx = document.getElementById('tasksBarChart').getContext('2d');
+    window.tasksBarChartObj = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: barLabels,
+        datasets: [{ label: 'Hours', data: barData }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              autoSkip: false,
+              maxRotation: 45,
+              minRotation: 45
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Hours'
+            },
+            ticks: {
+              callback: v => {
+                const totalSec = Math.round(v * 3600);
+                const hh = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+                const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+                return `${hh}:${mm}`;
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: true, position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const sec = Math.round(ctx.parsed.y * 3600);
+                const hh  = String(Math.floor(sec / 3600)).padStart(2, '0');
+                const mm  = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+                return `${ctx.dataset.label}: ${hh}:${mm}`;
+              }
+            }
+          },
+          datalabels: {
+            display: false,
+            anchor: 'end',
+            align: 'top',
+            formatter: value => {
+              const totalSec = Math.round(value * 3600);
+              const hh       = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+              const mm       = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+              return `${hh}:${mm}`;
+            },
+            font: {
+              size: 10
+            }
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+
+    if (!toggleListenerAdded) {
+      document.getElementById('toggleValues').addEventListener('click', () => {
+        showValues = !showValues;
+        window.tasksBarChartObj.options.plugins.datalabels.display = showValues;
+        window.tasksBarChartObj.update();
+      });
+      toggleListenerAdded = true;
+    }
+  };
+
+     // 1) listener do codeFilter (usa só filterTable, que já existe)
+document.getElementById('codeFilter').addEventListener('change', filterTable);
+
+// 2) Definição da função filterByDepartment
+function filterByDepartment(dep) {
+  currentDepartmentFilter = dep;
+  filterTable();  // atualiza a tabela
+  if (document.getElementById('dashboard').classList.contains('active')) {
+    renderDashboard();  // atualiza o dashboard se estiver visível
+  }
+}
+
+// 3) listeners para os botões do slicer que chamam filterByDepartment
+document.querySelectorAll('#slicer button[data-department]').forEach(button => {
+  button.addEventListener('click', event => {
+    const department = event.target.getAttribute('data-department');
+    filterByDepartment(department);
+    setActive(document.querySelectorAll('#slicer button'), 'active', event.target);
+  });
+});
+
+
+      function showPasswordModal() {
+        document.getElementById('passwordModal').style.display = 'flex';
+        document.getElementById('passwordInput').focus();
+      }
+      function closeModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'none';
+        document.getElementById('passwordInput').value = '';
+      }
+      function showDateModal() {
+        document.getElementById('dateModal').style.display = 'flex';
+        document.getElementById('clearStartDate').focus();
+      }
+      function closeDateModal() {
+        document.getElementById('dateModal').style.display = 'none';
+        document.getElementById('clearStartDate').value = '';
+        document.getElementById('clearEndDate').value = '';
+      }
+      function checkPassword() {
+        const passwordInput = document.getElementById('passwordInput').value;
+        const correctPassword = "abcd@1234";
+        if (passwordInput === correctPassword) {
+          closeModal();
+          showDateModal();
+        } else {
+          document.getElementById('errorMessage').style.display = 'block';
+        }
+      }
+      function clearHistoryByDate() {
+        const startDate = new Date(document.getElementById('clearStartDate').value);
+        const endDate = new Date(document.getElementById('clearEndDate').value);
+        if (isNaN(startDate) || isNaN(endDate)) {
+          alert('Please enter valid start and end dates.');
+          return;
+        }
+        storedData = storedData.filter(entry => {
+          const entryDate = new Date(entry.date.split('/').reverse().join('-'));
+          return entryDate < startDate || entryDate > endDate;
+        });
+        localStorage.setItem('csvData', JSON.stringify(storedData));
+        closeDateModal();
+        alert("Selected history cleared.");
+        clearData();
+      }
+
+      function updateHeadcount() {
+        const rows = document.querySelectorAll("#resultTable tbody tr");
+        const uniqueEmployeeDays = new Set();
+        rows.forEach(row => {
+          if (row.offsetParent !== null && row.querySelector("td")) {
+            const employeeName = row.querySelector("td:nth-child(1)").textContent.trim();
+            const dateText     = row.querySelector("td:nth-child(4)").textContent.trim();
+            if (employeeName && dateText && employeeName.toLowerCase() !== 'employee') {
+              const key = `${employeeName}|${dateText}`;
+              uniqueEmployeeDays.add(key);
+            }
+          }
+        });
+        const headcountSpan = document.getElementById("headcountCount");
+        headcountSpan.textContent = uniqueEmployeeDays.size;
+        headcountSpan.style.fontWeight = "bold";
+        headcountSpan.style.fontSize   = "1.3em";
+        headcountSpan.style.color      = (uniqueEmployeeDays.size === 0) ? "#ff8c00" : "#c1121f";
+      }
+
+      // Listener para exportar Dashboard em PDF
+      document.getElementById('downloadPdfDashboard').addEventListener('click', function() {
+        const dashboard = document.getElementById('dashboard');
+        this.style.visibility = 'hidden';
+        let oldDisplay = window.tasksBarChartObj.options.plugins.datalabels.display;
+        window.tasksBarChartObj.options.plugins.datalabels.display = true;
+        window.tasksBarChartObj.update();
+        dashboard.classList.add('pdf-scale');
+        setTimeout(() => {
+          html2pdf()
+            .set({
+              margin: 0.1,
+              filename: 'dashboard_report.pdf',
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true },
+              jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+            })
+            .from(dashboard)
+            .save()
+            .then(() => {
+              dashboard.classList.remove('pdf-scale');
+              window.tasksBarChartObj.options.plugins.datalabels.display = oldDisplay;
+              window.tasksBarChartObj.update();
+              this.style.visibility = 'visible';
+            });
+        }, 350);
+      });
+
+      // Modal Planned Hours
+      // Modal Planned Hours (semana + tabela 7×N)
+function getFirstSundayOfYear(year) {
+  const d = new Date(year, 0, 1);
+  const offset = (7 - d.getDay()) % 7; 
+  return new Date(year, 0, 1 + offset);
+}
+function getWeekRange(year, weekNumber) {
+  const firstSunday = getFirstSundayOfYear(year);
+  const start = new Date(firstSunday.getTime() + (weekNumber - 1) * 7 * 86400e3);
+  const end   = new Date(start.getTime()      + 6 * 86400e3);
+  return [start, end];
+}
+
+document.getElementById('openPlannedHoursModal').addEventListener('click', function() {
+  // 1) Limpa tabela
+  const table = document.getElementById('weeklyPlannedTable');
+  const thead = table.querySelector('thead tr');
+  const tbody = table.querySelector('tbody');
+  thead.innerHTML = '<th style="border:1px solid #ddd; padding:6px;">Task</th>';
+  tbody.innerHTML = '';
+
+  // 2) Pega o número da semana (prioridade: digitado ➜ salvo ➜ semana atual)
+  const inpWeek   = document.getElementById('modalWeekNumber');
+  let weekNum     = parseInt(inpWeek.value, 10);
+  const savedWeek = parseInt(localStorage.getItem('plannedModalWeek'), 10);
+  const today     = new Date();
+
+  if (isNaN(weekNum) || weekNum < 1 || weekNum > 53) {
+    if (!isNaN(savedWeek) && savedWeek >= 1 && savedWeek <= 53) {
+      weekNum = savedWeek;
+    } else {
+      weekNum = getCustomWeekNumber(today);
+    }
+    inpWeek.value = weekNum;
+  }
+  localStorage.setItem('plannedModalWeek', weekNum);
+
+  inpWeek.addEventListener('change', () => {
+    const v = parseInt(inpWeek.value, 10);
+    if (!isNaN(v) && v >= 1 && v <= 53) {
+      localStorage.setItem('plannedModalWeek', v);
+      populateWeeklyPlannedTable();
+    }
+  });
+
+  // 3) Calcula intervalo de datas domingo→sábado
+  const [startDate, endDate] = getWeekRange(today.getFullYear(), weekNum);
+  const dates = [];
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    dates.push(new Date(d));
+  }
+
+  // 4) Monta cabeçalho de 7 dias
+  dates.forEach(dt => {
+    const dd  = String(dt.getDate()).padStart(2, '0');
+    const mm  = String(dt.getMonth() + 1).padStart(2, '0');
+    const lbl = `${dd}/${mm}`;
+    const th  = document.createElement('th');
+    th.style       = 'border:1px solid #ddd; padding:6px; text-align:center;';
+    th.textContent = lbl;
+    thead.appendChild(th);
+  });
+
+  // ── NOVO: Coluna Budget ao final do cabeçalho ──
+const thBudget = document.createElement('th');
+thBudget.style       = 'border:1px solid #ddd; padding:6px; text-align:center;';
+thBudget.textContent = 'Budget';
+thead.appendChild(thBudget);
+
+// 5) Filtra tasks e gera linhas
+const filterValue = document.getElementById('setModalTaskFilter').value.toLowerCase();
+const tmpTasks    = new Set();
+Object.entries(taskMapping).forEach(([code, name]) => tmpTasks.add(`${name}-${code.slice(-4)}`));
+Object.keys(plannedHoursTracker).forEach(t => tmpTasks.add(t));
+storedData.forEach(e => tmpTasks.add(e.task));
+
+const pickOnePerBase = new Map();
+tmpTasks.forEach(t => {
+  const base = t.replace(/-\d{4}$/, '');
+  if (!pickOnePerBase.has(base) || /-\d{4}$/.test(t)) {
+    pickOnePerBase.set(base, t);
+  }
+});
+
+const uniqueTasks = Array.from(pickOnePerBase.values())
+  .filter(t => t.toLowerCase().includes(filterValue))
+  .sort((a, b) => {
+    const pA = a.charAt(0), pB = b.charAt(0);
+    if (pA !== pB) return pA === 'E' ? -1 : 1;
+    const nA = parseInt((a.match(/\d{4}$/) || [])[0], 10) || Infinity;
+    const nB = parseInt((b.match(/\d{4}$/) || [])[0], 10) || Infinity;
+    return nA - nB;
+  });
+
+uniqueTasks.forEach(tsk => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td style="border:1px solid #ddd; padding:6px;">${tsk}</td>`;
+
+// inputs HH:MM para cada dia
+dates.forEach(dt => {
+  const key      = dt.toLocaleDateString('en-GB');
+  const existing = plannedHoursTracker[tsk]?.[key];
+  const inp      = document.createElement('input');
+  inp.type        = 'text';
+  inp.placeholder = 'HH:MM';
+  inp.value       = existing != null
+    ? (() => {
+        const h = Math.floor(existing);
+        const m = Math.round((existing - h) * 60);
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      })()
+    : '';
+  inp.dataset.task = tsk;
+  inp.dataset.date = key;
+  inp.style        = 'width:60px; padding:4px; margin:2px;';
+
+  // ←– VALIDAÇÃO: força refocar se formato inválido
+ 
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Tab' || e.key === 'Enter') {
+      if (!validateTimeInput(inp)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+  });
+
+  if (existing != null) {
+    inp.readOnly = true;
+    inp.addEventListener('focus', () => {
+      alert(
+        'These hours have already been set. To modify them, please use the Edit Hours function and enter the security code.'
+      );
+      inp.blur();
+    });
+  }
+
+  const td = document.createElement('td');
+  td.style = 'border:1px solid #ddd; padding:0; text-align:center;';
+  td.appendChild(inp);
+  tr.appendChild(td);
+});
+
+ // ── NOVO: cell do Budget semanal ──
+const budgetInp = document.createElement('input');
+budgetInp.type        = 'text';
+budgetInp.placeholder = 'HH:MM';
+const existingBudget  = plannedHoursTracker[tsk]?.budget;
+if (existingBudget != null) {
+  const h = Math.floor(existingBudget);
+  const m = Math.round((existingBudget - h) * 60);
+  budgetInp.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+// ←– VALIDAÇÃO: força refocar se formato inválido
+budgetInp.addEventListener('keydown', e => {
+  if (e.key === 'Tab' || e.key === 'Enter') {
+    if (!validateTimeInput(budgetInp)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+});
+
+budgetInp.dataset.task       = tsk;
+budgetInp.dataset.weekBudget = 'true';
+budgetInp.style              = 'width:60px; padding:4px; margin:2px;';
+
+const tdBudget = document.createElement('td');
+tdBudget.style = 'border:1px solid #ddd; padding:0; text-align:center;';
+tdBudget.appendChild(budgetInp);
+tr.appendChild(tdBudget);
+  tbody.appendChild(tr);
+});
+
+
+  // 6) Exibe modal
+  document.getElementById('plannedHoursModal').style.display = 'flex';
+});
+
+
+// ─── Modal Planned Hours: tabela 7×N ──────────────────────────────────────────
+function populateWeeklyPlannedTable() {
+  const table = document.getElementById('weeklyPlannedTable');
+  const thead = table.querySelector('thead tr');
+  const tbody = table.querySelector('tbody');
+  thead.innerHTML = '<th style="border:1px solid #ddd; padding:6px;">Task</th>';
+  tbody.innerHTML = '';
+
+  // Descobre a semana selecionada
+  const today     = new Date();
+  const weekInput = parseInt(document.getElementById('modalWeekNumber').value, 10);
+  const weekNum   = (!isNaN(weekInput) && weekInput >= 1 && weekInput <= 53)
+                     ? weekInput
+                     : getCustomWeekNumber(today);
+
+  // Gera as 7 datas domingo→sábado
+  const [startDate, endDate] = getWeekRange(today.getFullYear(), weekNum);
+  const dates = [];
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    dates.push(new Date(d));
+  }
+
+  // Cabeçalho de dias
+  dates.forEach(dt => {
+    const dd  = String(dt.getDate()).padStart(2, '0');
+    const mm  = String(dt.getMonth() + 1).padStart(2, '0');
+    const th  = document.createElement('th');
+    th.style       = 'border:1px solid #ddd; padding:6px; text-align:center;';
+    th.textContent = `${dd}/${mm}`;
+    thead.appendChild(th);
+  });
+
+  // ── NOVO: adiciona coluna Budget ──
+  const thBudget = document.createElement('th');
+  thBudget.style       = 'border:1px solid #ddd; padding:6px; text-align:center;';
+  thBudget.textContent = 'Budget';
+  thead.appendChild(thBudget);
+
+  // Lista única de tasks (mesma lógica de antes)…
+  const filterValue = document.getElementById('setModalTaskFilter').value.toLowerCase();
+  const tmpTasks    = new Set();
+  Object.entries(taskMapping).forEach(([code, name]) => tmpTasks.add(`${name}-${code.slice(-4)}`));
+  Object.keys(plannedHoursTracker).forEach(t => tmpTasks.add(t));
+  storedData.forEach(e => tmpTasks.add(e.task));
+
+  const pickOne = new Map();
+  tmpTasks.forEach(t => {
+    const base = t.replace(/-\d{4}$/, '');
+    if (!pickOne.has(base) || /-\d{4}$/.test(t)) pickOne.set(base, t);
+  });
+
+  const uniqueTasks = Array.from(pickOne.values())
+    .filter(t => t.toLowerCase().includes(filterValue))
+    .sort((a,b) => {
+      const pA = a.charAt(0), pB = b.charAt(0);
+      if (pA !== pB) return pA === 'E' ? -1 : 1;
+      const nA = parseInt((a.match(/\d{4}$/)||[])[0],10)||Infinity;
+      const nB = parseInt((b.match(/\d{4}$/)||[])[0],10)||Infinity;
+      return nA - nB;
+    });
+
+  // Monta cada linha
+  uniqueTasks.forEach(tsk => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="border:1px solid #ddd; padding:6px;">${tsk}</td>`;
+
+
+// Para cada data da semana cria uma célula com <input>
+dates.forEach(dt => {
+  const key      = dt.toLocaleDateString('en-GB');      // ex.: 14/05/2025
+  const existing = plannedHoursTracker[tsk]?.[key];     // valor salvo (decimal)
+
+  /* 1) Cria o input de texto */
+  const inp = document.createElement('input');
+  inp.type        = 'text';
+  inp.placeholder = 'HH:MM';
+
+  // → converte decimal → "HH:MM" se já houver valor gravado
+  inp.value = existing != null
+    ? (() => {
+        const h = Math.floor(existing);            // parte inteira = horas
+        const m = Math.round((existing - h) * 60); // resto → minutos
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      })()
+    : '';
+
+  inp.dataset.task = tsk;
+  inp.dataset.date = key;
+  inp.style        = 'width:60px; padding:4px; margin:2px;';
+
+  /* ── LISTENERS DE VALIDAÇÃO ────────────────────────────── */
+  // 1. Saiu do campo por clique → valida
+  inp.addEventListener('blur', () => {
+    validateTimeInput(inp);      // alerta + mantém foco se inválido
+  });
+
+  // 2. Tenta sair com Tab ou Enter → bloqueia se inválido
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Tab' || e.key === 'Enter') {
+      const ok = validateTimeInput(inp);
+      if (!ok) {
+        e.preventDefault();      // impede avançar
+        e.stopPropagation();
+      }
+    }
+  });
+
+  /* ── Se já existia valor, impede edição direta ─────────── */
+  if (existing != null) {
+    inp.readOnly = true;
+    inp.addEventListener('focus', () => {
+      alert(
+        'These hours have already been set. To modify them, ' +
+        'please use the Edit Hours function and enter the security code.'
+      );
+      inp.blur();
+    });
+  }
+
+  /* 2) Adiciona o input dentro da célula <td> */
+  const td = document.createElement('td');
+  td.style = 'border:1px solid #ddd; padding:0; text-align:center;';
+  td.appendChild(inp);
+  tr.appendChild(td);
+});
+
+    // ── NOVO: input Budget no fim da linha ──
+const budgetInp = document.createElement('input');
+budgetInp.type        = 'text';
+budgetInp.placeholder = 'HH:MM';
+const exBud           = plannedHoursTracker[tsk]?.budget;
+if (exBud != null) {
+  const h = Math.floor(exBud);
+  const m = Math.round((exBud - h) * 60);
+  budgetInp.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+  // ── bloqueia edição após primeiro lançamento ──
+  budgetInp.readOnly = true;
+  budgetInp.addEventListener('focus', () => {
+    alert(
+      'These budget hours have already been set. To modify them, please use the Edit Hours function and enter the security code.'
+    );
+    budgetInp.blur();
+  });
+}
+budgetInp.dataset.task       = tsk;
+budgetInp.dataset.weekBudget = 'true';
+budgetInp.style              = 'width:60px; padding:4px; margin:2px;';
+
+
+const tdBud = document.createElement('td');
+tdBud.style = 'border:1px solid #ddd; padding:0; text-align:center;';
+tdBud.appendChild(budgetInp);
+tr.appendChild(tdBud);
+tbody.appendChild(tr);
+
+  });
+}
+
+
+
+// 6) Listeners leves reaproveitando a função
+document.getElementById('setModalTaskFilter')
+  .addEventListener('input', populateWeeklyPlannedTable);
+
+document.getElementById('modalWeekNumber')
+  .addEventListener('change', populateWeeklyPlannedTable);
+
+     
+      // 1) Cancel: fecha o modal da mesma forma
+document.getElementById('cancelPlannedHours').addEventListener('click', function() {
+  document.getElementById('plannedHoursModal').style.display = 'none';
+});
+
+// 2) Confirm: valida cada campo, depois grava
+document.getElementById('confirmPlannedHours')
+  .addEventListener('click', function () {
+
+    /* 1. Coleta todos os inputs de hora da tabela */
+    const inputs = document.querySelectorAll(
+      '#weeklyPlannedTable tbody input[type="text"]'
+    );
+
+    /* 2. Validação – se encontrar erro, cancela o salvamento */
+    for (const inp of inputs) {
+      const val = inp.value.trim();
+
+      if (val === '') continue;               // campo vazio é permitido
+
+      if (!isValidHHMM(val)) {                // formato errado
+        alert('There are invalid times. Use HH:MM format, e.g., 07:30.');
+
+        inp.focus();                          // leva usuário ao erro
+        return;                               // ⛔ aborta – nada será salvo
+      }
+    }
+
+    /* 3. Conversão HH:MM → decimal e gravação */
+    inputs.forEach(inp => {
+      const val  = inp.value.trim();
+      const task = inp.dataset.task;
+      plannedHoursTracker[task] = plannedHoursTracker[task] || {};
+
+      /* 3a. Coluna “Budget” (weekBudget) */
+      if (inp.dataset.weekBudget === 'true') {
+        if (val) {
+          const [hh, mm] = val.split(':').map(Number);
+          plannedHoursTracker[task].budget = hh + mm / 60;
+        } else {
+          delete plannedHoursTracker[task].budget;
+        }
+        return;                               // não processa como dia
+      }
+
+      /* 3b. Colunas de dia da semana */
+      const date = inp.dataset.date;
+      if (val) {
+        const [hh, mm] = val.split(':').map(Number);
+        plannedHoursTracker[task][date] = hh + mm / 60;
+      } else {
+        delete plannedHoursTracker[task][date];
+      }
+    });
+
+    /* 4. Persiste, atualiza UI, fecha modal */
+    localStorage.setItem(
+      'plannedHoursTracker',
+      JSON.stringify(plannedHoursTracker)
+    );
+    displayBudgetOverview();
+    document.getElementById('plannedHoursModal').style.display = 'none';
+  });
+
+document.getElementById('openEditHoursModal').addEventListener('click', function() {
+  document.getElementById('editHoursPasswordModal').style.display = 'flex';
+  document.getElementById('editHoursPasswordInput').value = '';
+  document.getElementById('editHoursErrorMessage').style.display = 'none';
+});
+      // clique em “OK” na modal de senha (Edit Hours)
+document.getElementById('confirmEditHoursPasswordButton').addEventListener('click', function () {
+  const userPassword = document.getElementById('editHoursPasswordInput').value;
+
+  if (userPassword === 'abcd@1234') {
+    // esconde a modal de senha
+    document.getElementById('editHoursPasswordModal').style.display = 'none';
+
+    /* —————————————————————————————
+       monta a lista de tasks filtrada
+       ————————————————————————————— */
+    const filterValue = document.getElementById('editModalTaskFilter').value.toLowerCase();
+
+    // 1) tasks únicas vindas dos dados
+    const tasks = [...new Set(storedData.map(e => e.task))]
+      // 2) aplica filtro de texto
+      .filter(tsk => tsk.toLowerCase().includes(filterValue))
+      // 3) ordena pelo código numérico no final (-1234, -1404…)
+      .sort(ordenarPorCodigo);                // ← usa a função criada
+
+    /* —————————————————————————————
+       preenche o <select> do modal
+       ————————————————————————————— */
+    const editModalTask = document.getElementById('editModalTask');
+    editModalTask.innerHTML = '';
+
+    if (tasks.length) {
+      tasks.forEach(tsk => {
+        const option       = document.createElement('option');
+        option.value       = tsk;
+        option.textContent = tsk;
+        editModalTask.appendChild(option);
+      });
+      editModalTask.selectedIndex = 0;
+    } else {
+      const option       = document.createElement('option');
+      option.value       = '';
+      option.textContent = 'Select Task';
+      editModalTask.appendChild(option);
+    }
+
+    // exibe a modal principal de edição
+    document.getElementById('editHoursModal').style.display = 'flex';
+
+  } else {
+    // senha incorreta
+    document.getElementById('editHoursErrorMessage').style.display = 'block';
+  }
+});
+
+      document.getElementById('cancelEditHoursPasswordButton').addEventListener('click', function() {
+        document.getElementById('editHoursPasswordModal').style.display = 'none';
+      });
+      document.getElementById('editModalTaskFilter').addEventListener('input', function() {
+        let filterValue = this.value.toLowerCase();
+        let tasks = [...new Set(storedData.map(entry => entry.task))];
+        tasks = tasks.filter(tsk => tsk.toLowerCase().includes(filterValue));
+        let editModalTask = document.getElementById('editModalTask');
+        editModalTask.innerHTML = '';
+        if (tasks.length > 0) {
+          tasks.forEach(tsk => {
+            let option = document.createElement('option');
+            option.value = tsk;
+            option.textContent = tsk;
+            editModalTask.appendChild(option);
+          });
+          editModalTask.selectedIndex = 0;
+        } else {
+          let option = document.createElement('option');
+          option.value = '';
+          option.textContent = 'Select Task';
+          editModalTask.appendChild(option);
+        }
+      });
+      document.getElementById('cancelEditHours').addEventListener('click', function() {
+        document.getElementById('editHoursModal').style.display = 'none';
+      });
+      document.getElementById('confirmEditHours').addEventListener('click', function() {
+        let task = document.getElementById('editModalTask').value;
+        let selectedDay = document.getElementById('editModalSelectedDay').value;
+        let timeInput = document.getElementById('editModalDayPlanned').value;
+        let dayPlanned = convertHHMMToDecimal(timeInput);
+        if (!task || !selectedDay || dayPlanned === null) {
+          alert("Please fill in all fields with a valid time in HH:MM format.");
+          return;
+        }
+        let selectedDayFormatted = new Date(selectedDay).toLocaleDateString('en-GB');
+        plannedHoursTracker[task] = plannedHoursTracker[task] || {};
+        plannedHoursTracker[task][selectedDayFormatted] = dayPlanned;
+        localStorage.setItem('plannedHoursTracker', JSON.stringify(plannedHoursTracker));
+        document.getElementById('editHoursModal').style.display = 'none';
+        displayBudgetOverview();
+      });
+      document.getElementById('modalTaskFilter').addEventListener('input', function() {
+        displayBudgetOverview();
+      });
+
+      document.querySelectorAll('.nav-tabs button').forEach(button => {
+        button.addEventListener('click', (event) => {
+          const tabName = event.target.getAttribute('data-tab');
+          document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+          document.getElementById(tabName).classList.add('active');
+          if (tabName === 'budgetTracker') {
+            displayBudgetOverview();
+          } else if (tabName === 'dashboard') {
+            renderDashboard();
+          }
+        });
+      });
+
+document.getElementById('processFileButton').addEventListener('click', processFile);
+document.getElementById('clearDataButton').addEventListener('click', clearData);
+document.getElementById('filterByDateButton').addEventListener('click', filterByDate);
+document.getElementById('downloadExcelButton').addEventListener('click', downloadExcelReportBetweenDates);
+document.getElementById('toggleResultButton').addEventListener('click', toggleResult);
+document.getElementById('clearHistoryButton').addEventListener('click', showPasswordModal);
+document.getElementById('confirmPasswordButton').addEventListener('click', checkPassword);
+document.getElementById('cancelPasswordButton').addEventListener('click', closeModal);
+document.getElementById('confirmDateButton').addEventListener('click', clearHistoryByDate);
+document.getElementById('cancelDateButton').addEventListener('click', closeDateModal);
+document.getElementById('employeeFilter').addEventListener('input', filterTable);
+document.getElementById('taskFilter').addEventListener('input', filterTable);
+document.getElementById('labourAccountFilter').addEventListener('input', filterTable);
+document.getElementById('payCodeFilter').addEventListener('change', filterTable);
+document.getElementById('dateFilter').addEventListener('change', filterTable);  // ← adicionada aqui
+document.getElementById('downloadBudgetReport').addEventListener('click', downloadBudgetReport);
+document.getElementById('toggleBudgetMode').addEventListener('click', () => {
+  showBudgetTotal = !showBudgetTotal;   // inverte o modo
+  renderDashboard();                    // redesenha KPI com o valor correcto
+});
+
+/* ★ novos listeners para a caixinha Missing Budgets */
+document.getElementById('showMissingBudgets').addEventListener('click', toggleMissingBudgetBox);
+document.getElementById('closeMissingBudgets').addEventListener('click', toggleMissingBudgetBox);
+
+populateDropdowns();
+
+
+
+      console.log('storedData ao iniciar:', storedData);
+
+      if (storedData.length > 0) {
+        const inicial = aggregateData(storedData);
+        displayResults(inicial);
+        updateTotalHours(inicial);
+        updateFilteredTotals(inicial);
+        updateHeadcount();
+        updateMissingTaskCount();
+        displayBudgetOverview();
+      }
+
+     populatePayCodeDropdown();
+populateComparisonTaskFilters();
+populateComparisonDayDropdown(); // ← nova chamada
+renderComparisonCharts();         // desenha os gráficos pela primeira vez
+
+      //document.getElementById('ecomTaskFilter').addEventListener('change', renderComparisonCharts);
+      //document.getElementById('retailTaskFilter').addEventListener('change', renderComparisonCharts);
+
+      document.getElementById('toggleComparisonPanel').addEventListener('click', function () {
+        const panel = document.getElementById('comparisonPanel');
+        const wasHidden = (panel.style.display === 'none' || panel.style.display === '');
+        panel.style.display = wasHidden ? 'block' : 'none';
+        if (wasHidden) {
+          populateComparisonTaskFilters();
+          renderComparisonCharts();
+        }
+      });
+      document.getElementById('closeComparisonPanel').addEventListener('click', function() {
+        document.getElementById('comparisonPanel').style.display = 'none';
+      });
+
+// ── listener do “✖” do detalhe diário ──
+      document
+        .getElementById('closeDailyDetailBtn')
+        .addEventListener('click', closeDailyDetail);
+    });  
+// ordena pelo número de 4 dígitos que aparece no fim do nome da task
+function ordenarPorCodigo(a, b) {
+  const nA = parseInt((a.match(/\d{4}$/) || [])[0]) || Infinity;
+  const nB = parseInt((b.match(/\d{4}$/) || [])[0]) || Infinity;
+  return nA - nB;           // menor → maior
+}
+/* =========================================================
+   ★ NOVO – Missing Budgets (tabela + toggle + drag)
+   ========================================================= */
+const box      = document.getElementById('missingBudgetBox');
+const boxBody  = box.querySelector('.mb-body');
+const btnShow  = document.getElementById('showMissingBudgets');
+const btnClose = document.getElementById('closeMissingBudgets');
+
+/* 1. Tasks que têm budget e consumo 0 nos filtros atuais */
+function getMissingBudgetTasks() {
+  // tasks presentes no CSV depois dos filtros
+  const visibleTasks = new Set(
+    (currentDepartmentFilter === 'All' ? storedData : storedData.filter(
+      e => currentDepartmentFilter === 'Break'
+            ? (/break/i.test(e.task) || e.labourAccount.endsWith('4010'))
+            : e.department === currentDepartmentFilter
+    )).map(e => e.task)
+  );
+
+  const list = [];
+  Object.entries(plannedHoursTracker).forEach(([tsk, obj]) => {
+    if (typeof obj.budget !== 'number') return;      // sem budget
+    if (visibleTasks.has(tsk))        return;        // tem consumo
+
+    // respeita filtro de departamento
+    if (currentDepartmentFilter === 'Ecom'   && !tsk.startsWith('E.')) return;
+    if (currentDepartmentFilter === 'Retail' && !tsk.startsWith('R.')) return;
+    if (currentDepartmentFilter === 'Break'  && !/break/i.test(tsk))   return;
+
+    list.push({ task: tsk, hours: obj.budget });
+  });
+
+  list.sort((a,b) => b.hours - a.hours);             // maior → menor
+  return list;
+}
+
+/* 2. Preenche a caixinha com a tabela */
+function populateMissingBudgetBox() {
+  const list = getMissingBudgetTasks();
+
+const rows = list
+  .map(r =>
+    `<tr><td>${r.task}</td><td style="text-align:right;">${formatTimeHHMM(r.hours*3600)}</td></tr>`
+  )
+  .join('');
+
+// soma geral em segundos
+const totalSec = list.reduce((sum, r) => sum + r.hours * 3600, 0);
+
+boxBody.innerHTML = `
+  <table>
+    <thead>
+      <tr><th>Task</th><th style="text-align:right;">Budget</th></tr>
+    </thead>
+    <tbody>
+      ${rows || '<tr><td colspan="2" style="text-align:center;color:#888;">Nenhum</td></tr>'}
+      ${list.length ? `
+        <tr class="mb-total">
+          <th>Total</th>
+          <th style="text-align:right;">${formatTimeHHMM(totalSec)}</th>
+        </tr>` : ''}
+    </tbody>
+  </table>`;
+}
+
+/* 3. Toggle mostrar / ocultar */
+function toggleMissingBudgetBox() {
+  if (box.style.display === '' || box.style.display === 'none') {
+    populateMissingBudgetBox();
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+btnShow.addEventListener('click', toggleMissingBudgetBox);
+btnClose.addEventListener('click', toggleMissingBudgetBox);
+
+/* 4. Arrastar pela barra azul */
+(function makeDraggable() {
+  let offsetX=0, offsetY=0, dragging=false;
+  box.querySelector('.mb-header').addEventListener('mousedown', e => {
+    dragging = true;
+    box.classList.add('grabbing');
+    const r = box.getBoundingClientRect();
+    offsetX = e.clientX - r.left;
+    offsetY = e.clientY - r.top;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    box.style.left  = (e.clientX - offsetX) + 'px';
+    box.style.top   = (e.clientY - offsetY) + 'px';
+    box.style.right = 'auto';
+  });
+  document.addEventListener('mouseup', () => {
+    dragging = false;
+    box.classList.remove('grabbing');
+  });
+})();
+/* ========================================================= */
+
+// ← fecha o DOMContentLoaded
+  </script>
+</body>
+</html>
