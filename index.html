@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2631,7 +2632,11 @@ tbody.appendChild(tr);
 
 function filterTable() {
   const employeeFilter      = document.getElementById('employeeFilter').value.toLowerCase();
-  const taskFilter          = document.getElementById('taskFilter').value.toLowerCase();
+  const taskFilterRaw = document.getElementById('taskFilter').value.toLowerCase().trim();
+const taskFilters   = taskFilterRaw
+  ? taskFilterRaw.split(/[,;]+/).map(s => s.trim()).filter(Boolean)
+  : [];
+
   const labourAccountFilter = document.getElementById('labourAccountFilter').value.toLowerCase();
   const payCodeFilter       = document.getElementById('payCodeFilter').value.toLowerCase();
   const weekFilter          = document.getElementById('selectWeek').value;
@@ -2646,27 +2651,34 @@ function filterTable() {
       filteredData  = [];
 
   rows.forEach(row => {
-    const cells = row.getElementsByTagName('td');
+  const cells = row.getElementsByTagName('td');
 
-    const employeeText      = cells[0].textContent.toLowerCase();
-    const roleText          = cells[2].textContent.trim();
-    const dateText          = cells[3].textContent.trim();
-    const taskText          = cells[8].textContent.trim();
-    const labourAccountText = cells[6].textContent.toLowerCase();
-    const payCodeText       = cells[10].textContent.toLowerCase();
-    const weekText          = cells[4].textContent;
-    const monthText         = cells[5].textContent;
-    const hoursText         = cells[9].textContent;
+  const employeeText      = cells[0].textContent.toLowerCase();
+  const roleText          = cells[2].textContent.trim();
+  const dateText          = cells[3].textContent.trim();
+  const taskText          = cells[8].textContent.trim();
+  const taskTextLC        = taskText.toLowerCase();
+  const labourAccountText = cells[6].textContent.toLowerCase();
+  const payCodeText       = cells[10].textContent.toLowerCase();
+  const weekText          = cells[4].textContent;
+  const monthText         = cells[5].textContent;
+  const hoursText         = cells[9].textContent;
 
-    /* ──────────── filtros “normais” ──────────── */
-    let show =
-      employeeText.includes(employeeFilter) &&
-      labourAccountText.includes(labourAccountFilter) &&
-      taskText.toLowerCase().includes(taskFilter);
+  // multitask: vírgula ou “;” → OR
+  const matchesTask =
+    taskFilters.length === 0 ||
+    taskFilters.some(f => taskTextLC.includes(f));
 
-    if (payCodeFilter && payCodeText !== payCodeFilter) show = false;
-    if (weekFilter    && weekText    !== weekFilter)    show = false;
-    if (monthFilter   && monthText   !== monthFilter)   show = false;
+  /* ──────────── filtros “normais” ──────────── */
+  let show =
+    employeeText.includes(employeeFilter) &&
+    labourAccountText.includes(labourAccountFilter) &&
+    matchesTask;   // 👈 aqui é a troca — antes usava taskFilter
+
+  if (payCodeFilter && payCodeText !== payCodeFilter) show = false;
+  if (weekFilter    && weekText    !== weekFilter)    show = false;
+  if (monthFilter   && monthText   !== monthFilter)   show = false;
+
 
     /* ─────────── filtro por departamento ─────────── */
     if (currentDepartmentFilter && currentDepartmentFilter !== 'All') {
