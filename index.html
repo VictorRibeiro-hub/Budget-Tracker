@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -349,7 +347,7 @@ th, td {
     tr:hover {
       background-color: #d9d9d9;
     }
-    #resultTable {
+        #resultTable {
       table-layout: fixed;
       width: 100%;
     }
@@ -361,50 +359,79 @@ th, td {
       padding: 6px 8px;
       font-size: 0.85rem;
     }
+
+    /* 1 = Employee */
     #resultTable th:nth-child(1),
     #resultTable td:nth-child(1) {
       width: 150px;
     }
+
+    /* 2 = TYPE (CORE / AGY J&T / AGY 247) */
     #resultTable th:nth-child(2),
     #resultTable td:nth-child(2) {
-      width: 100px;
+      width: 90px;
     }
+
+    /* 3 = Person Number */
     #resultTable th:nth-child(3),
     #resultTable td:nth-child(3) {
-      width: 80px;
-    }
-    #resultTable th:nth-child(4),
-    #resultTable td:nth-child(4) {
       width: 100px;
     }
+
+    /* 4 = Role */
+    #resultTable th:nth-child(4),
+    #resultTable td:nth-child(4) {
+      width: 80px;
+    }
+
+    /* 5 = Date */
     #resultTable th:nth-child(5),
     #resultTable td:nth-child(5) {
-      width: 60px;
+      width: 100px;
     }
+
+    /* 6 = Week */
     #resultTable th:nth-child(6),
     #resultTable td:nth-child(6) {
-      width: 80px;
-    }
-    #resultTable th:nth-child(7),
-    #resultTable td:nth-child(7) {
-      width: 180px;
-    }
-    #resultTable th:nth-child(8),
-    #resultTable td:nth-child(8) {
       width: 60px;
     }
-    #resultTable th:nth-child(9),
-    #resultTable td:nth-child(9) {
-      width: 150px;
-    }
-    #resultTable th:nth-child(10),
-    #resultTable td:nth-child(10) {
+
+    /* 7 = Month */
+    #resultTable th:nth-child(7),
+    #resultTable td:nth-child(7) {
       width: 80px;
     }
+
+    /* 8 = Labour Account */
+    #resultTable th:nth-child(8),
+    #resultTable td:nth-child(8) {
+      width: 180px;
+    }
+
+    /* 9 = Dep. */
+    #resultTable th:nth-child(9),
+    #resultTable td:nth-child(9) {
+      width: 60px;
+    }
+
+    /* 10 = Task */
+    #resultTable th:nth-child(10),
+    #resultTable td:nth-child(10) {
+      width: 150px;
+    }
+
+    /* 11 = Total Hours */
     #resultTable th:nth-child(11),
     #resultTable td:nth-child(11) {
+      width: 80px;
+    }
+
+    /* 12 = Pay Code */
+    #resultTable th:nth-child(12),
+    #resultTable td:nth-child(12) {
       width: 105px;
     }
+
     #employeeFilter {
       width: 95px;
       padding: 4px;
@@ -441,14 +468,22 @@ th, td {
       border-radius: 8px;
       text-align: center;
     }
-    .modal-content input,
-    .modal-content select {
-      width: 80%;
-      padding: 5px;
-      margin: 5px 0;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
+    /* ✅ aplica 80% só para inputs "normais" (não checkbox) */
+.modal-content input:not([type="checkbox"]),
+.modal-content select {
+  width: 80%;
+  padding: 5px;
+  margin: 5px 0;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+/* ✅ checkboxes sempre com tamanho normal */
+.modal-content input[type="checkbox"]{
+  width: auto !important;
+  margin: 0 !important;
+}
+
     .modal-buttons {
       display: flex;
       justify-content: space-between;
@@ -822,6 +857,39 @@ th, td {
   position: sticky;
   top: 0;
 }
+#resultTable {
+  table-layout: auto;
+  width: 100%;
+}
+/* Garantir que todas as células da tabela não quebrem linha */
+#resultTable th,
+#resultTable td {
+  white-space: nowrap;
+  padding: 4px 6px;
+}
+
+/* Colunas pequenas (auto-ajustadas para mínimo possível) */
+#resultTable th:nth-child(11),  /* Hours Dec */
+#resultTable td:nth-child(11),
+#resultTable th:nth-child(12),  /* Total Hours */
+#resultTable td:nth-child(12),
+#resultTable th:nth-child(13),  /* Pay Code */
+#resultTable td:nth-child(13) {
+  width: 110px;       /* tamanho ideal para estes campos */
+  max-width: 110px;
+  text-align: center;
+}
+/* ✅ alinha checkbox + texto bonitinho */
+#comparisonPanel label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#comparisonPanel label input[type="checkbox"] {
+  flex: 0 0 auto;
+}
+
   </style>
 </head>
 <body>
@@ -860,10 +928,15 @@ th, td {
       </details>
 
       <div class="totals-labels">
-        <div>Gross Hours: <span id="grossHours">0:00</span></div>
-        <div>Logged Hours: <span id="loggedHours">0:00</span></div>
-        <div>Unlogged&nbsp;Hours: <span id="depTotalHours">0:00</span></div>
-      </div>
+  <div>Gross Hours: <span id="grossHours">0:00</span></div>
+  <div>Logged Hours: <span id="loggedHours">0:00</span></div>
+  <div>Missing Task Hours: <span id="depTotalHours">0:00</span></div>
+  <div>
+    Over Time: 
+    <span id="overtimeHours">0:00</span>
+    (<span id="overtimePercent">0%</span>)
+  </div>
+</div>
 
       <div id="slicer">
         <button class="filter-button" data-department="Ecom">Ecom</button>
@@ -887,6 +960,7 @@ th, td {
             <option value="missingTask">Missing Task</option>
             <option value="manager">Manager</option>
             <option value="operative">Operative</option>
+            <option value="overtime">OT > 40h (Week)</option>
           </select>
         </div>
       </div>
@@ -901,9 +975,11 @@ th, td {
         </button>
         <button class="filter-button" id="clearHistoryButton">C. History</button>
         <div id="missingTaskLabel" style="display:inline-block; margin-left:20px;">
-          <strong>Missing Task:</strong>
-          <span id="missingTaskCount" class="highlight-number">0</span>
-        </div>
+  <strong>Missing Task:</strong>
+  <span id="missingTaskCount" class="highlight-number">0</span>
+  <span id="missingTaskHours" style="margin-left:8px;">0:00 (0.00%)</span>
+</div>
+
       </div>
 
       <!-- Password Modal -->
@@ -937,53 +1013,194 @@ th, td {
 <div id="result">
   <table id="resultTable">
     <thead>
-      <tr>
-        <th>
-          <div style="display: flex; align-items: center; justify-content: space-between; gap:3px;">
-            <span>Employee</span>
-            <input class="filter-input" type="text" id="employeeFilter" placeholder="Filter">
-          </div>
-        </th>
-        <th>Person Number</th>
-        <th>Role</th>
-        <th>
-          <div style="display: flex; align-items: center; gap:3px; justify-content: flex-start;">
-            <span>Date</span>
-            <select id="dateFilter" style="font-size: 0.75rem; padding: 2px; width: 85px; flex-shrink: 0;">
-              <option value="">All</option>
-            </select>
-          </div>
-        </th>
-        <th>Week</th>
-        <th>Month</th>
-        <th>
-          <div style="display: flex; align-items: center; justify-content: space-between; gap:3px;">
-            <span>Labour Account</span>
-            <input class="filter-input" type="text" id="labourAccountFilter" placeholder="Filter">
-          </div>
-        </th>
-        <th>Dep.</th>
-        <th>
-          <div style="display: flex; align-items: center; justify-content: space-between; gap:3px;">
-            <span>Task</span>
-            <input class="filter-input" type="text" id="taskFilter" placeholder="Filter">
-          </div>
-        </th>
-        <th>Total Hours</th>
+  <tr>
+    <!-- 1) Employee + filtro por nome + OT>40h -->
+    <th>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:3px;">
+    <span>Employee</span>
+    <input class="filter-input" type="text" id="employeeFilter" placeholder="Filter">
+  </div>
+</th>
 
-              <th>
-                <div style="display: flex; align-items: center; gap: 3px; justify-content: flex-start;">
-                  <span>Pay Code</span>
-                  <select
-                    id="payCodeFilter"
-                    style="font-size: 0.8rem; padding: 2px; width: 60px; flex-shrink: 0;"
-                  >
-                    <option value="">All</option>
-                  </select>
-                </div>
-              </th>
-            </tr>
-          </thead>
+
+    <!-- 2) TYPE -->
+    <th>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:3px;">
+        <span>Type</span>
+        <select id="typeFilter"
+                style="font-size:0.8rem; padding:2px; width:80px; flex-shrink:0;">
+          <option value="">All</option>
+          <option value="CORE">CORE</option>
+          <option value="AGY J&T">AGY J&T</option>
+          <option value="AGY 247">AGY 247</option>
+        </select>
+      </div>
+    </th>
+
+
+    <!-- 3) resto igual ao original, apenas “deslocado” para a frente -->
+    <th>Person Number</th>
+    <th>Role</th>
+    <th>
+      <div style="display: flex; align-items: center; gap:3px; justify-content: flex-start;">
+        <span>Date</span>
+        <select id="dateFilter"style="font-size: 0.8rem; padding: 2px; width: 90px; flex-shrink: 0;">
+
+          <option value="">All</option>
+        </select>
+      </div>
+    </th>
+    <th>Week</th>
+    <th>Month</th>
+    <th>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap:3px;">
+        <span>Labour Account</span>
+        <input class="filter-input" type="text" id="labourAccountFilter" placeholder="Filter">
+      </div>
+    </th>
+    <th>Dep.</th>
+    <th>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap:3px;">
+    <span>Task</span>
+    <input class="filter-input" type="text" id="taskFilter" placeholder="Filter">
+  </div>
+</th>
+
+<!-- NOVO: coluna de horas em decimal -->
+<th>Hours Dec.</th>
+
+<th>Total Hours</th>
+
+<th style="position: relative; overflow: visible;">
+  <div style="display: flex; align-items: center; gap: 3px; justify-content: flex-start; position: relative;">
+
+
+
+  <!-- 🔹 Botão passa a ser o “cabeçalho” Pay Code -->
+  <button
+    id="openPayCodePanel"
+    style="
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+    "
+  >
+    Pay Code ▾
+  </button>
+
+    <!-- 🔹 Dropdown ORIGINAL (agora escondido só para lógica interna) -->
+  <select
+    id="payCodeFilter"
+    style="display:none;"
+  >
+    <option value="">All</option>
+  </select>
+
+  <!-- 🔹 Painel MULTI-SELEÇÃO de Pay Codes – estilo Selfridges Gold -->
+  <div id="payCodeMultiPanel"
+       style="
+         display:none;
+         position:absolute;
+         top:22px;
+         right:0;
+         left:auto;
+         z-index:999999;
+
+         background:#000000;
+         color:#f5d10d;
+         border:1px solid #f5d10d;
+         box-shadow:0 4px 12px rgba(0,0,0,0.4);
+         border-radius:8px;
+         padding:10px 12px;
+         max-height:320px;
+         width:220px;
+         font-size:0.8rem;
+       ">
+
+    <!-- Cabeçalho dourado -->
+    <div style="
+          font-weight:bold;
+          margin:-10px -12px 8px -12px;
+          padding:6px 10px;
+          background:linear-gradient(90deg,#000000,#222222);
+          color:#f5d10d;
+          border-radius:8px 8px 0 0;
+          border-bottom:1px solid #f5d10d;
+        ">
+      Select Pay Codes
+    </div>
+
+    <!-- Corpo com lista de checkboxes -->
+    <div id="payCodeMultiBody"
+         style="
+           display:flex;
+           flex-direction:column;
+           gap:4px;
+           max-height:230px;
+           overflow-y:auto;
+           background:#111111;
+           border:1px solid #333333;
+           padding:6px;
+           border-radius:4px;
+         ">
+      <!-- checkboxes são criados via JS -->
+    </div>
+
+    <!-- Rodapé com botões -->
+    <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-top:10px;
+        ">
+      <button id="payCodeMultiClear"
+              style="
+                padding:4px 8px;
+                font-size:0.75rem;
+                border-radius:4px;
+                border:1px solid #f5d10d;
+                background:transparent;
+                color:#f5d10d;
+                cursor:pointer;
+              ">
+        Clear
+      </button>
+
+      <div>
+        <button id="payCodeMultiCancel"
+                style="
+                  padding:4px 8px;
+                  font-size:0.75rem;
+                  border-radius:4px;
+                  border:1px solid #666666;
+                  background:#222222;
+                  color:#f5d10d;
+                  cursor:pointer;
+                  margin-right:4px;
+                ">
+          Cancel
+        </button>
+        <button id="payCodeMultiOk"
+                style="
+                  padding:4px 10px;
+                  font-size:0.75rem;
+                  border-radius:4px;
+                  border:1px solid #f5d10d;
+                  background:#f5d10d;
+                  color:#000000;
+                  font-weight:bold;
+                  cursor:pointer;
+                ">
+          OK
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+
           <tbody>
             <!-- Rows serão adicionadas dinamicamente -->
           </tbody>
@@ -1310,11 +1527,16 @@ th, td {
     </div>
   </div>
 
-  <!-- Modal for Setting Planned Hours -->
-  <!-- Modal for Setting Planned Hours (semana + tabela 7×N) -->
-<div id="plannedHoursModal" class="modal">
+  <div id="plannedHoursModal" class="modal">
   <div class="modal-content" style="width: 800px; max-height: 80vh; overflow-y: auto;">
     <h3>Set Weekly Planned Hours</h3>
+
+    <p style="margin: 6px 0; font-size: 0.85rem; color: #555;">
+      You can enter time as <strong>HH:MM</strong> (e.g. <strong>07:30</strong>)
+      or as <strong>decimal hours</strong> (e.g. <strong>7,5</strong> or <strong>285.38</strong>).
+      The system will automatically convert everything to HH:MM.
+    </p>
+
 
     <!-- 1) Seletor de Semana -->
     <div style="margin-bottom: 12px;">
@@ -1354,30 +1576,47 @@ th, td {
 
 
   <!-- Modal for Editing Planned Hours -->
-  <div id="editHoursModal" class="modal">
-    <div class="modal-content">
-      <p>Edit Planned Hours</p>
-      <label for="editModalTaskFilter">Filter Task:</label>
-      <input type="text" id="editModalTaskFilter" class="filter-input">
-      <br>
-      <label for="editModalTask">Task:</label>
-      <select id="editModalTask">
-        <option value="">Select Task</option>
-        <!-- Options serão populadas dinamicamente -->
-      </select>
-      <br>
-      <label for="editModalSelectedDay">Select Day:</label>
-      <input type="date" id="editModalSelectedDay">
-      <br>
-      <label for="editModalDayPlanned">Planned Hours for that Day:</label>
-      <input type="text" id="editModalDayPlanned" placeholder="HH:MM">
-      <br>
-      <div class="modal-buttons">
-        <button id="confirmEditHours" class="confirm-button">OK</button>
-        <button id="cancelEditHours" class="cancel-button">Cancel</button>
-      </div>
+<div id="editHoursModal" class="modal">
+  <div class="modal-content">
+
+    <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 10px;">
+      Edit Planned Hours
+    </p>
+
+    <p style="margin: 6px 0; font-size: 0.85rem; color: #555;">
+      Enter the planned time in <strong>HH:MM</strong> (e.g. <strong>07:30</strong>)
+      or in <strong>decimal hours</strong> (e.g. <strong>7.5</strong>, <strong>7,5</strong>,
+      <strong>25.50</strong> or <strong>25,50</strong>).
+      The system will convert everything to HH:MM and store it internally as decimal hours.
+    </p>
+
+    <label for="editModalTaskFilter">Filter Task:</label>
+    <input type="text" id="editModalTaskFilter" class="filter-input">
+    <br>
+
+    <label for="editModalTask">Task:</label>
+    <select id="editModalTask">
+      <option value="">Select Task</option>
+      <!-- Options serão populadas dinamicamente -->
+    </select>
+    <br>
+
+    <label for="editModalSelectedDay">Select Day:</label>
+    <input type="date" id="editModalSelectedDay">
+    <br>
+
+    <label for="editModalDayPlanned">Planned Hours for that Day:</label>
+    <input type="text" id="editModalDayPlanned" placeholder="HH:MM">
+    <br>
+
+    <div class="modal-buttons">
+      <button id="confirmEditHours" class="confirm-button">OK</button>
+      <button id="cancelEditHours" class="cancel-button">Cancel</button>
     </div>
+
   </div>
+</div>
+
 
   <!-- Modal de senha para Edit Hours -->
   <div id="editHoursPasswordModal" class="modal">
@@ -1434,8 +1673,79 @@ th, td {
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-  <script>
-    // ───────── Variáveis Globais ─────────
+    <script>
+  // ───────── Variáveis Globais ─────────
+
+  // ============================================
+  // ETAPA 2: Preencher painel de Pay Codes
+  // a partir do dropdown #payCodeFilter existente
+  // ============================================
+  function rebuildPayCodeMultiPanelFromDropdown() {
+  const container = document.getElementById('payCodeMultiBody');
+  if (!container) return;
+
+  // Guarda o que já estava marcado antes
+  const previouslyChecked = new Set();
+  container.querySelectorAll('input[type="checkbox"]:checked')
+    .forEach(cb => previouslyChecked.add(cb.value));
+
+  // Limpa o painel
+  container.innerHTML = '';
+
+  // Gera a lista de Pay Codes únicos a partir do storedData
+  const uniqueCodes = new Set(
+    (storedData || [])
+      .map(entry => (entry.payCode || '').trim())
+      .filter(code => code !== '')
+  );
+
+  // Se ainda não há Pay Codes, mostra uma mensagenzinha
+  if (uniqueCodes.size === 0) {
+    const info = document.createElement('div');
+    info.style.fontSize = '0.8rem';
+    info.style.color = '#777';
+    info.textContent = 'No Pay Codes loaded yet.';
+    container.appendChild(info);
+    return;
+  }
+
+  // 🔹 NOVO: converte para array e ordena os Pay Codes (A–Z)
+  const sortedCodes = Array.from(uniqueCodes).sort((a, b) => a.localeCompare(b));
+
+  // Cria um checkbox para cada Pay Code, já ordenado
+  sortedCodes.forEach(code => {
+    const label = document.createElement('label');
+    label.style.display = 'flex';
+    label.style.alignItems = 'center';
+    label.style.gap = '6px';
+    label.style.fontSize = '0.8rem';
+    label.style.cursor = 'pointer';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = code;
+
+    // Se já estava marcado antes, mantém marcado
+    if (previouslyChecked.has(code)) {
+      checkbox.checked = true;
+    }
+
+    const span = document.createElement('span');
+    span.textContent = code;
+
+    label.appendChild(checkbox);
+    label.appendChild(span);
+    container.appendChild(label);
+  });
+}
+
+
+
+  // 🔹 NOVO: ao carregar a página, tenta montar o painel (se já houver opções)
+  document.addEventListener('DOMContentLoaded', () => {
+    rebuildPayCodeMultiPanelFromDropdown();
+  });
+
 const taskMapping = {
   "1007680000": "R.Missing Task",
   "1007681300": "R.Retail Putaway",
@@ -1540,6 +1850,8 @@ let grossMinutes          = 0;
 let originalTotalMinutes  = 0;
 let showValues = false;
 let toggleListenerAdded = false;
+let currentCodeFilter = '';
+
 
 /* ▼ NOVO: controla o modo do cartão Budget Total (true = total; false = visíveis) */
 let showBudgetTotal = true;
@@ -1561,10 +1873,19 @@ let selectedRetailTasks = [];
       return `${hh}:${mm}:${ss}`;
     }
     function formatTimeHHMM(totalSeconds) {
-      const hours   = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    }
+  const hours   = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+// Ex.:  120 seg  -> "+00:02:00"
+//      -240 seg  -> "-00:04:00"
+function formatSignedTime(seconds) {
+  const sign = seconds < 0 ? '-' : '+';
+  const abs  = Math.abs(seconds);
+  return sign + formatTime(abs);
+}
+
 
     const managersList = [
       { name: "Akash Mohammed", personNumber: "82610253992" },
@@ -1577,7 +1898,7 @@ let selectedRetailTasks = [];
       { name: "Busby Ian", personNumber: "82610121362" },
       { name: "Cleaves Matt", personNumber: "82610156629" },
       { name: "Cox Hayley", personNumber: "82610149965" },
-      { name: "Connolly Joseph", personNumber: "82610103701" },
+      { name: "Albrighton Ashley", personNumber: "82610107474" },
       { name: "Davies Dean", personNumber: "82610106041" },
       { name: "Ellis Oliver", personNumber: "82610281094" },
       { name: "Fiaz Mohammed", personNumber: "82610107884" },
@@ -1616,6 +1937,22 @@ let selectedRetailTasks = [];
       { name: "Wilson Ronald", personNumber: "82610109544" },
       { name: "Yasmeen Tahira", personNumber: "82610132057" }
     ];
+    // ─────────────────────────────
+    // TYPE: CORE / AGY J&T / AGY 247
+    // ─────────────────────────────
+    function getEmployeeType(employee) {
+      if (!employee) return '';
+
+      const lower = employee.toLowerCase().trim();
+
+      if (lower.startsWith('extra ')) {
+        return 'AGY J&T';
+      }
+      if (lower.startsWith('247 ')) {
+        return 'AGY 247';
+      }
+      return 'CORE';
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
   // ─── FUNÇÃO NOVA: popula o dropdown de dias ───
@@ -1640,68 +1977,89 @@ let selectedRetailTasks = [];
 
   // … aqui continuam todas as outras funções e event listeners do seu código …
 
-  // 1) Função para preencher dropdown de Pay Code
   function populatePayCodeDropdown() {
-    const payCodeSelect = document.getElementById('payCodeFilter');
-    payCodeSelect.innerHTML = '<option value="">All</option>';
-    const uniqueCodes = new Set(
-      storedData
-        .map(entry => entry.payCode || '')
-        .filter(code => code.trim() !== '')
-    );
-    uniqueCodes.forEach(code => {
-      const opt = document.createElement('option');
-      opt.value       = code;
-      opt.textContent = code;
-      payCodeSelect.appendChild(opt);
-    });
-  }
-function isValidHHMM(str) {
-  // aceita H, HH ou HHH… :MM onde MM vai de 00 a 59
-  return /^\d+:\d{2}$/.test(str) &&
-         Number(str.split(':')[1]) < 60;
+  const payCodeSelect = document.getElementById('payCodeFilter');
+  payCodeSelect.innerHTML = '<option value="">All</option>';
+  const uniqueCodes = new Set(
+    storedData
+      .map(entry => entry.payCode || '')
+      .filter(code => code.trim() !== '')
+  );
+  uniqueCodes.forEach(code => {
+    const opt = document.createElement('option');
+    opt.value       = code;
+    opt.textContent = code;
+    payCodeSelect.appendChild(opt);
+  });
+
+  // 🔹 NOVO — Atualiza o painel multi-seleção
+  rebuildPayCodeMultiPanelFromDropdown();
 }
 
-      // Função para converter HH:MM para decimal
-function convertHHMMToDecimal(timeStr) {
-  const parts = timeStr.split(':');
-  if (parts.length === 2) {
-    const hours = parseInt(parts[0], 10);
-    const minutes = parseInt(parts[1], 10);
-    if (!isNaN(hours) && !isNaN(minutes)) {
-      return hours + minutes / 60;
-    }
+// ───────────────────────────────────────────────
+// Helpers para tempo: HH:MM ou horas decimais
+// ───────────────────────────────────────────────
+
+// Converte string (HH:MM ou decimal "285,38"/"285.38") → horas decimais
+function parseTimeToDecimal(raw) {
+  if (!raw) return null;
+  const value = raw.toString().trim().replace(',', '.');
+
+  // Caso 1: formato HH:MM (ou HH:MM:SS)
+  if (value.includes(':')) {
+    const parts = value.split(':');
+    if (parts.length < 2) return null;
+
+    const h = Number(parts[0]);
+    const m = Number(parts[1]);
+    const s = parts[2] != null ? Number(parts[2]) : 0;
+
+    if ([h, m, s].some(n => Number.isNaN(n))) return null;
+    if (h < 0 || m < 0 || s < 0) return null;
+
+    return h + m / 60 + s / 3600;
   }
-  return null;
+
+  // Caso 2: decimal puro (ex.: "7.5" ou "285.38795")
+  const dec = Number(value);
+  if (Number.isNaN(dec) || dec < 0) return null;
+  return dec;
 }
 
-function validateTimeInput(input) {
-  const val = input.value.trim();
-  if (!val) return true;
+// Converte horas decimais → string HH:MM
+function decimalToHHMM(dec) {
+  if (dec == null || Number.isNaN(dec)) return '';
+  const totalMinutes = Math.round(dec * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
 
-  // se for Budget semanal, permite horas >= 24
-  if (input.dataset.weekBudget === 'true') {
-    if (!/^\d+:[0-5]\d$/.test(val)) {
-      alert('Please enter time in HH:MM format (ex.: 00:00).');
-      // deixa o foco voltar só após o blur terminar
-      setTimeout(() => {
-        input.focus();
-        input.select();
-      }, 0);
-      return false;
-    }
-  } else {
-    // dias da semana, apenas 00–23:00–59
-    if (!isValidHHMM(val)) {
-      alert('Please enter time in HH:MM format (ex.:00:00).');
-      setTimeout(() => {
-        input.focus();
-        input.select();
-      }, 0);
-      return false;
-    }
+// Validação genérica: aceita HH:MM ou decimal
+function isValidHHMM(value) {
+  return parseTimeToDecimal(value) != null;
+}
+
+// Mantém o nome antigo para compatibilidade com o resto do código
+function convertHHMMToDecimal(timeInput) {
+  return parseTimeToDecimal(timeInput);
+}
+
+// Valida e NORMALIZA o input para HH:MM
+function validateTimeInput(inputEl) {
+  const raw = inputEl.value.trim();
+  if (raw === '') return true; // vazio é permitido
+
+  const dec = parseTimeToDecimal(raw);
+  if (dec == null) {
+    alert('Please enter a valid time. Use HH:MM (e.g., 07:30) or decimal hours (e.g., 7.5).');
+    inputEl.focus();
+    inputEl.select?.();
+    return false;
   }
 
+  // Se for válido, reescreve o campo em HH:MM padrão
+  inputEl.value = decimalToHHMM(dec);
   return true;
 }
  // 2) populateComparisonTaskFilters: preenche os modais de filtro
@@ -1855,9 +2213,13 @@ window.applyRetailFilter = applyRetailFilter;
   // 1) Lê o dia selecionado (string “DD/MM/YYYY” ou vazio)
   const selectedDay = document.getElementById('selectComparisonDay').value;
 
-  // 2) Filtra por departamento Ecom/​Retail **E** (opcionalmente) pelo dia
-  let dataEcom   = storedData.filter(e => e.department === "Ecom");
-  let dataRetail = storedData.filter(e => e.department === "Retail");
+  // 2) Fonte base = EXACTAMENTE o que a Home está a mostrar (respeita Pay Code e restantes filtros)
+const baseData = getFilteredData();
+
+// Filtra por departamento Ecom/Retail **E** (opcionalmente) pelo dia
+let dataEcom   = baseData.filter(e => e.department === "Ecom");
+let dataRetail = baseData.filter(e => e.department === "Retail");
+
 
   if (selectedDay) {
     dataEcom   = dataEcom.filter(e => e.date === selectedDay);
@@ -2022,8 +2384,16 @@ function showDailyDetail(task) {
   // 1) Atualiza o título do modal para o nome da task clicada
   document.getElementById('dailyDetailTitle').textContent = task;
 
-  // 2) filtra só os registros daquele task
-  const data = storedData.filter(e => e.task === task);
+  // 2) filtra só os registros daquele task, respeitando os filtros da Home
+const selectedDay = document.getElementById('selectComparisonDay').value;
+
+let data = getFilteredData().filter(e => e.task === task);
+
+// Se o user escolheu um dia no Comparison Panel, mantém o detalhe consistente
+if (selectedDay) {
+  data = data.filter(e => e.date === selectedDay);
+}
+
 
   // 3) agrupa por dia
   const byDay = {};
@@ -2131,109 +2501,155 @@ document
 }
 
 function parseCSV(text) {
-        const rows = text.trim().split('\n');
-        const result = [];
-        for (const row of rows) {
-          const columns = row.split(',');
-          if (columns[0].toLowerCase().includes("employee")) continue;
+  const rows   = text.trim().split('\n');
+  const result = [];
 
-          let firstPart    = columns[0].trim().replace(/^"|"$/g, '');
-          let secondPart   = columns[1].trim().replace(/^"|"$/g, '');
-          let employee     = firstPart + ' ' + secondPart;
-          if (firstPart.toLowerCase().startsWith('extra')) employee = 'Extra ' + secondPart;
-          else if (firstPart.toLowerCase().startsWith('247')) employee = '247 ' + secondPart;
-          const personNumber = columns[2].trim();
+  for (const row of rows) {
+    const columns = row.split(',');
+    if (columns[0].toLowerCase().includes("employee")) continue;
 
-          const [day, month, year] = columns[3].trim().split('/').map(Number);
-          const dateObj   = new Date(year, month - 1, day);
-          const week      = getCustomWeekNumber(dateObj);
-          const monthName = dateObj.toLocaleString('default', { month: 'long' });
+    let firstPart  = columns[0].trim().replace(/^"|"$/g, '');
+    let secondPart = columns[1].trim().replace(/^"|"$/g, '');
+    let employee   = firstPart + ' ' + secondPart;
 
-          let rawLabourAccount = (columns[5]||'').trim();
-          let labourAccount = rawLabourAccount.includes("DSC/GB_1725")
-            ? (rawLabourAccount.match(/(\d{6}).*\/(\d{4})/)||[])[1] +
-              (rawLabourAccount.match(/(\d{6}).*\/(\d{4})/)||[])[2]
-            : rawLabourAccount.replace(/\/+/g, '');
+    if (firstPart.toLowerCase().startsWith('extra')) {
+      employee = 'Extra ' + secondPart;
+    } else if (firstPart.toLowerCase().startsWith('247')) {
+      employee = '247 ' + secondPart;
+    }
 
-          // ─── Departamento original pelo prefixo ───
-let department = '';
-if (labourAccount.startsWith('100765')) {
-  department = 'Ecom';
-} else if (labourAccount.startsWith('100768')) {
-  department = 'Retail';
-} else if (labourAccount.startsWith('100666')) {
-  department = 'IT';
-}
-// (se não for nenhum desses, department fica '')
+    const personNumber = columns[2].trim();
 
+    const [day, month, year] = columns[3].trim().split('/').map(Number);
+    const dateObj   = new Date(year, month - 1, day);
+    const week      = getCustomWeekNumber(dateObj);
+    const monthName = dateObj.toLocaleString('default', { month: 'long' });
 
+    let rawLabourAccount = (columns[5] || '').trim();
+    let labourAccount = rawLabourAccount.includes("DSC/GB_1725")
+      ? (rawLabourAccount.match(/(\d{6}).*\/(\d{4})/) || [])[1] +
+        (rawLabourAccount.match(/(\d{6}).*\/(\d{4})/) || [])[2]
+      : rawLabourAccount.replace(/\/+/g, '');
 
-// se veio sem conta E SEM departamento válido, ignora a linha
-if ((!labourAccount || labourAccount.toUpperCase() === 'N/A') &&
-    (!department    || department.toUpperCase() === 'N/A')) {
-  continue;
-}
+    // ─── Departamento original pelo prefixo ───
+    let department = '';
+    if (labourAccount.startsWith('100765')) {
+      department = 'Ecom';
+    } else if (labourAccount.startsWith('100768')) {
+      department = 'Retail';
+    } else if (labourAccount.startsWith('100666')) {
+      department = 'IT';
+    }
+    // (se não for nenhum desses, department fica '')
 
-// ─── Estilo da labourAccount (vazia = erro) ───
-let labourAccountStyle = '';
-if (!labourAccount) {
-  labourAccount      = 'Missing Code';
-  labourAccountStyle = 'color:red;font-weight:bold;';
-}
+    // se veio sem conta E SEM departamento válido, ignora a linha
+    if ((!labourAccount || labourAccount.toUpperCase() === 'N/A') &&
+        (!department    || department.toUpperCase() === 'N/A')) {
+      continue;
+    }
 
-// ─── Task + estilo ─────────────────────────────────────────
-let taskStyle = '';
-let task;
+    // ─── Estilo da labourAccount (vazia = erro) ───
+    let labourAccountStyle = '';
+    if (!labourAccount) {
+      labourAccount      = 'Missing Code';
+      labourAccountStyle = 'color:red;font-weight:bold;';
+    }
 
-const codeSuffix = labourAccount.slice(-4);
-// ─── Flag para indicar Paid Break ───
-const isBreak = codeSuffix === '4010';
+    // ─── Task + estilo ─────────────────────────────────────────
+    let taskStyle = '';
+    let task;
 
-if (codeSuffix === '0000') {
-  /*  ▸ Prefixo conforme o departamento já detetado ─────────── */
-  const depPrefix =
-          department === 'Ecom'   ? 'E.'
-        : department === 'Retail' ? 'R.'
-        : 'U.';                       // U. = Unknown / outros
+    const codeSuffix = labourAccount.slice(-4);
+    const isBreak    = codeSuffix === '4010';   // Flag para Paid Break
 
-  task      = `${depPrefix}Missing Task-${codeSuffix}`;
-  taskStyle = 'color:red;font-weight:bold;';
-} else {
-  const baseTask = taskMapping[labourAccount] ||
-                   (isBreak ? 'Paid Break' : 'N/A');
-  task = `${baseTask}-${codeSuffix}`;
-}
+    if (codeSuffix === '0000') {
+      // Prefixo conforme o departamento já detetado
+      const depPrefix =
+              department === 'Ecom'   ? 'E.'
+            : department === 'Retail' ? 'R.'
+            : 'U.';  // Unknown / outros
 
+      task      = `${depPrefix}Missing Task-${codeSuffix}`;
+      taskStyle = 'color:red;font-weight:bold;';
+    } else {
+      const baseTask = taskMapping[labourAccount] ||
+                       (isBreak ? 'Paid Break' : 'N/A');
+      task = `${baseTask}-${codeSuffix}`;
+    }
 
-         const isManager = managersList.some(m => m.personNumber === personNumber);
-          const role      = isManager ? 'Manager' : 'Operative';
+    const isManager = managersList.some(m => m.personNumber === personNumber);
+    const role      = isManager ? 'Manager' : 'Operative';
 
-          const totalHoursFormatted = String(columns[6] || '00:00:00')
-            .trim()
-            .replace(/"/g, '');
+    // ───────────────────────────────────────────────
+    //  NOVO BLOCO: horas em decimal + HH:MM:SS
+    // ───────────────────────────────────────────────
+    const rawTime = String(columns[6] || '').trim().replace(/"/g, '');
 
-          const rawPayCode = columns[columns.length - 1].trim().replace(/^"|"$/g, '');
-          const payCode    = rawPayCode;
+    let totalHoursDecimal   = 0;          // número em horas decimais (ex.: 7.75)
+    let totalHoursFormatted = '00:00:00'; // string HH:MM:SS (ex.: 07:45:00)
 
-          result.push({
-            employee,
-            personNumber,
-            role,
-            date: dateObj.toLocaleDateString('en-GB'),
-            week,
-            month: monthName,
-            labourAccount,
-            department,
-            task,
-            taskStyle,
-            dayOfWeek: dateObj.getDay(),
-            labourAccountStyle,
-            totalHoursFormatted,
-            payCode
-          });
+    if (rawTime) {
+      if (rawTime.includes(':')) {
+        // Caso 1: ainda venha em HH:MM[:SS] (compatibilidade com ficheiros antigos)
+        const parts = rawTime.split(':').map(Number);
+        const h = parts[0] || 0;
+        const m = parts[1] || 0;
+        const s = parts[2] || 0;
+        const totalSec = h * 3600 + m * 60 + s;
+
+        totalHoursDecimal = totalSec / 3600;
+
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        const ss = String(s).padStart(2, '0');
+        totalHoursFormatted = `${hh}:${mm}:${ss}`;
+      } else {
+        // Caso 2: vem em decimal (ex.: "7.75")
+        const dec = parseFloat(rawTime.replace(',', '.'));
+        if (!isNaN(dec) && dec > 0) {
+          totalHoursDecimal = dec;
+
+          const totalSec = Math.round(dec * 3600);
+          const h = Math.floor(totalSec / 3600);
+          const m = Math.floor((totalSec % 3600) / 60);
+          const s = totalSec % 60;
+
+          const hh = String(h).padStart(2, '0');
+          const mm = String(m).padStart(2, '0');
+          const ss = String(s).padStart(2, '0');
+          totalHoursFormatted = `${hh}:${mm}:${ss}`;
         }
-        return result;
       }
+    }
+
+    const rawPayCode = columns[columns.length - 1]
+      .trim()
+      .replace(/^"|"$/g, '');
+    const payCode    = rawPayCode;
+
+    result.push({
+      employee,
+      personNumber,
+      role,
+      date: dateObj.toLocaleDateString('en-GB'),
+      week,
+      month: monthName,
+      labourAccount,
+      department,
+      task,
+      taskStyle,
+      dayOfWeek: dateObj.getDay(),
+      labourAccountStyle,
+      totalHoursDecimal,    // 👈 NOVO (horas decimais, origem CSV)
+      totalHoursFormatted,  // 👈 HH:MM:SS derivado dos decimais
+      payCode
+    });
+  }
+
+  return result;
+}
+
+
 
       function aggregateData(data) {
         return data;
@@ -2251,7 +2667,7 @@ if (codeSuffix === '0000') {
   // 4) Persiste
   localStorage.setItem('csvData', JSON.stringify(storedData));
 }
-      function processFile() {
+            function processFile() {
   const fileInput = document.getElementById('fileInput');
   const file = fileInput.files[0];
   if (!file) {
@@ -2271,132 +2687,266 @@ if (codeSuffix === '0000') {
     updateResult();
 
     populateDropdowns();
-    populatePayCodeDropdown();
-    populateComparisonTaskFilters();
+populatePayCodeDropdown();
+populateComparisonTaskFilters();
+populateTypeDropdown();              // ✅ actualiza o filtro TYPE sempre que carrega ficheiro
 
-    // ──> NOVO: preenche o dropdown de dias do Comparison Panel
-    populateComparisonDayDropdown();
-    // e já redesenha os gráficos com as datas atualizadas
-    renderComparisonCharts();
+// ──> NOVO: preenche o dropdown de dias do Comparison Panel
+populateComparisonDayDropdown();
+// e já redesenha os gráficos com as datas atualizadas
+renderComparisonCharts();
 
-    fileInput.value = '';
-    fileInput.style.backgroundColor = '#ccc';
+fileInput.value = '';
+fileInput.style.backgroundColor = '#ccc';
 
-    displayBudgetOverview();
-    if (document.getElementById('dashboard').classList.contains('active')) {
-      renderDashboard();
-    }
+displayBudgetOverview();
+if (document.getElementById('dashboard').classList.contains('active')) {
+  renderDashboard();
+}
+
+// 🔹 NOVO: já recalcula filtros + Over Time assim que o ficheiro é processado
+filterTable();
+
+// ✅ NOVO: atualiza lista OT > 40h após carregar ficheiro
+populateOTPeopleDropdown();
+
   };
   reader.readAsText(file);
 }
 
-
       function updateMissingTaskCount() {
   const rows = document.querySelectorAll("#resultTable tbody tr");
   let missing = 0;
+
   rows.forEach(row => {
-    if (getComputedStyle(row).display !== 'none') {
-      const taskText = row.querySelector("td:nth-child(9)").textContent.trim();
-      // conta E.Missing Task-0000 e R.Missing Task-0000
-      if (taskText.endsWith("Missing Task-0000")) missing++;
-    }
+    if (getComputedStyle(row).display === 'none') return;
+
+    const cells = row.cells;
+    if (!cells || cells.length < 10) return; // ✅ ignora "No results found" / linhas incompletas
+
+    const taskText = (cells[9].textContent || '').trim(); // Task = coluna 10
+    if (taskText.endsWith("Missing Task-0000")) missing++;
   });
+
   const span = document.getElementById("missingTaskCount");
+  if (!span) return;
+
   span.textContent = missing;
   span.style.color = missing > 0 ? "#ff8c00" : "#333";
 }
 
 
-      function displayResults(data) {
-        const tbody = document.querySelector('#resultTable tbody');
-        tbody.innerHTML = '';
-        if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No results found</td></tr>';
-          updateHeadcount();
-          updateMissingTaskCount();
-          return;
-        }
-        const rows = data.map(entry => `
-          <tr>
-            <td>${entry.employee}</td>
-            <td>${entry.personNumber}</td>
-            <td>${entry.role}</td>
-            <td>${entry.date}</td>
-            <td>${entry.week}</td>
-            <td>${entry.month}</td>
-            <td>${entry.labourAccountStyle
-                  ? `<span style="${entry.labourAccountStyle}">${entry.labourAccount}</span>`
-                  : entry.labourAccount}</td>
-            <td>${entry.department || ''}</td>
-            <td>${entry.taskStyle
-                  ? `<span style="${entry.taskStyle}">${entry.task}</span>`
-                  : entry.task || 'N/A'}</td>
-            <td>${
-              (() => {
-                const [h = 0, m = 0, s = 0] = (entry.totalHoursFormatted || '00:00:00').split(':').map(Number);
-                const totalSec = h * 3600 + m * 60 + s;
-                return formatTime(totalSec);
-              })()
-            }</td>
-            <td>${entry.payCode || ''}</td>
-          </tr>
-        `).join('');
-        tbody.innerHTML = rows;
-        updateHeadcount();
-        updateMissingTaskCount();
-      }
+function updateMissingTaskHours() {
+  const rows = document.querySelectorAll("#resultTable tbody tr");
 
-     function updateTotalHours(data) {
-  let totalMinutes = 0, ecomMinutes = 0, retailMinutes = 0, breakMinutes = 0, loggedMinutes = 0;
-  grossMinutes = 0;
-  data.forEach(entry => {
-    const [hours = 0, minutes = 0, seconds = 0] = (entry.totalHoursFormatted || '00:00:00')
-      .split(':')
-      .map(Number);
-    const entrySeconds = hours * 3600 + minutes * 60 + seconds;
-    grossMinutes       += entrySeconds;
-    if (entry.department) {
-      totalMinutes    += entrySeconds;
-      if (entry.department === 'Ecom')    ecomMinutes    += entrySeconds;
-      else if (entry.department === 'Retail') retailMinutes += entrySeconds;
-      else if (entry.department === 'Break')  breakMinutes  += entrySeconds;
-      if (entry.task && entry.task !== 'N/A') loggedMinutes  += entrySeconds;
+  let missingSec = 0;
+  let grossSec   = 0;
+
+  rows.forEach(row => {
+    if (getComputedStyle(row).display === 'none') return;
+
+    const cells = row.cells;
+    if (!cells || cells.length < 12) return; // ✅ ignora "No results found" / linhas incompletas
+
+    const taskText  = (cells[9].textContent  || '').trim();  // Task = coluna 10
+    const hoursText = (cells[11].textContent || '').trim();  // Total Hours = coluna 12
+
+    if (!hoursText || hoursText === 'N/A') return;
+
+    // ✅ converte HH:MM:SS → segundos (com fallback safe)
+    const parts = hoursText.split(':').map(v => Number(v) || 0);
+    const h = parts[0] || 0, m = parts[1] || 0, s = parts[2] || 0;
+    const entrySec = h * 3600 + m * 60 + s;
+
+    grossSec += entrySec;
+
+    if (taskText.endsWith('Missing Task-0000')) {
+      missingSec += entrySec;
     }
   });
-  document.getElementById('grossHours').textContent = formatTime(grossMinutes);
+
+  const missingFormatted = formatTime(missingSec);
+  const percent = grossSec > 0 ? (missingSec / grossSec) * 100 : 0;
+
+  const el = document.getElementById('missingTaskHours');
+  if (!el) return;
+
+  const label = `${missingFormatted} (${percent.toFixed(2)}%)`;
+  el.innerHTML = `<span style="font-weight:bold;">${label}</span>`;
+  el.style.color = percent === 0 ? 'green' : '#c1121f';
+}
+
+      function displayResults(data) {
+  const tbody = document.querySelector('#resultTable tbody');
+  tbody.innerHTML = '';
+
+  if (data.length === 0) {
+    // agora a tabela tem 13 colunas (Employee… + Type + … + Hours Dec. + Total Hours + Pay Code)
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;">No results found</td></tr>';
+    updateHeadcount();
+    updateMissingTaskCount();
+    updateMissingTaskHours();
+    return;
+  }
+
+  const rows = data.map(entry => `
+  <tr>
+    <!-- 1) Employee -->
+    <td>${entry.employee}</td>
+
+    <!-- 2) TYPE (calculado pela função getEmployeeType) -->
+    <td>${getEmployeeType(entry.employee)}</td>
+
+    <!-- 3) resto igual, só “deslocado” uma posição -->
+    <td>${entry.personNumber}</td>
+    <td>${entry.role}</td>
+    <td>${entry.date}</td>
+    <td>${entry.week}</td>
+    <td>${entry.month}</td>
+    <td>${
+      entry.labourAccountStyle
+        ? `<span style="${entry.labourAccountStyle}">${entry.labourAccount}</span>`
+        : entry.labourAccount
+    }</td>
+    <td>${entry.department || ''}</td>
+    <td>${
+      entry.taskStyle
+        ? `<span style="${entry.taskStyle}">${entry.task}</span>`
+        : (entry.task || 'N/A')
+    }</td>
+
+    <!-- 10) NOVO: Hours Dec. (valor original do CSV em decimal) -->
+    <td>${
+      (() => {
+        if (typeof entry.totalHoursDecimal === 'number') {
+          return entry.totalHoursDecimal.toFixed(2);   // ex.: 7.75
+        }
+        // fallback: converte HH:MM:SS → decimal, para dados antigos
+        const t = entry.totalHoursFormatted || '00:00:00';
+        const [h = 0, m = 0, s = 0] = t.split(':').map(Number);
+        const dec = h + m / 60 + s / 3600;
+        return dec.toFixed(2);
+      })()
+    }</td>
+
+    <!-- 11) Total Hours (HH:MM) – continua como antes -->
+    <td>${
+      (() => {
+        const [h = 0, m = 0, s = 0] =
+          (entry.totalHoursFormatted || '00:00:00').split(':').map(Number);
+        const totalSec = h * 3600 + m * 60 + s;
+        return formatTime(totalSec);   // tua função já formata como HH:MM
+      })()
+    }</td>
+
+    <!-- 12) Pay Code -->
+    <td>${entry.payCode || ''}</td>
+  </tr>
+`).join('');
+
+  tbody.innerHTML = rows;
+  updateHeadcount();
+  updateMissingTaskCount();
+  updateMissingTaskHours();
+}
+
+     function updateTotalHours(data) {
+  let totalMinutes   = 0;
+  let ecomMinutes    = 0;
+  let retailMinutes  = 0;
+  let breakMinutes   = 0;
+  let loggedMinutes  = 0;
+
+  grossMinutes = 0;
+
+  data.forEach(entry => {
+    const [hours = 0, minutes = 0, seconds = 0] =
+      (entry.totalHoursFormatted || '00:00:00')
+        .split(':')
+        .map(Number);
+
+    const entrySeconds = hours * 3600 + minutes * 60 + seconds;
+
+    // “grossMinutes” aqui na verdade está em segundos, mas mantemos o nome
+    grossMinutes += entrySeconds;
+
+    if (entry.department) {
+      totalMinutes += entrySeconds;
+
+      if (entry.department === 'Ecom') {
+        ecomMinutes += entrySeconds;
+      } else if (entry.department === 'Retail') {
+        retailMinutes += entrySeconds;
+      } else if (entry.department === 'Break') {
+        breakMinutes += entrySeconds;
+      }
+
+      if (entry.task && entry.task !== 'N/A') {
+        loggedMinutes += entrySeconds;
+      }
+    }
+  });
+
+  // Atualiza labels principais (usando formatTime em segundos)
+  document.getElementById('grossHours').textContent  = formatTime(grossMinutes);
   document.getElementById('loggedHours').textContent = formatTime(loggedMinutes);
-  document.getElementById('totalBreak').textContent  = formatTime(breakMinutes);  // ← exibe
-  // diferença entre horas brutas e logadas
-  const diffSeconds = grossMinutes - loggedMinutes;
-  document.getElementById('depTotalHours').textContent = formatTime(diffSeconds);
+  document.getElementById('totalBreak').textContent  = formatTime(breakMinutes);
+  document.getElementById('totalEcom').textContent   = formatTime(ecomMinutes);
+  document.getElementById('totalRetail').textContent = formatTime(retailMinutes);
 
-  // se quiser manter totalMinutes para outras lógicas, guarde-o; senão remova
-  originalTotalMinutes = diffSeconds;
-
+  // Cor da Logged Hours se maior que Gross
   if (grossMinutes > loggedMinutes) {
     document.getElementById('loggedHours').style.color = "#ff8c00";
   } else {
     document.getElementById('loggedHours').style.color = "";
   }
-  document.getElementById('totalEcom').textContent = formatTime(ecomMinutes);
-  document.getElementById('totalRetail').textContent = formatTime(retailMinutes);
-  document.getElementById('totalBreak').textContent = formatTime(breakMinutes);
+
+  // Guarda totalMinutes (para lógicas já existentes)
   originalTotalMinutes = totalMinutes;
+
+  // Mantém o comportamento original de updateResult()
   updateResult();
-  const unloggedSpan = document.getElementById('depTotalHours');
-  if (unloggedSpan.textContent === '00:00:00') {
-    unloggedSpan.style.color = 'green';
-    unloggedSpan.textContent = '00:00:00';
-  } else {
-    unloggedSpan.style.color = 'red';
-    unloggedSpan.textContent = '+' + unloggedSpan.textContent.replace('-', '');
-  }
 }
+
 
 function updatePlannedLabel() {
   const label = document.getElementById('plannedLabel');
   label.textContent = 'Planned Hours';
 }
+// ==== HELPERS: Budget por semana ==================================
+function getBudgetForTaskWeek(task, weekNum) {
+  if (!plannedHoursTracker || !plannedHoursTracker[task]) return null;
+
+  const obj   = plannedHoursTracker[task];
+  const wkKey = String(weekNum);
+
+  // NOVO formato: budgets por semana
+  if (obj.budgets && obj.budgets[wkKey] != null) {
+    return obj.budgets[wkKey];          // horas em decimal
+  }
+
+  // COMPATIBILIDADE: se ainda existir um budget “antigo” global,
+  // devolve-o (vai desaparecer quando voltares a gravar as semanas).
+  if (typeof obj.budget === 'number') {
+    return obj.budget;
+  }
+
+  return null;
+}
+
+function setBudgetForTaskWeek(task, weekNum, valueDec) {
+  plannedHoursTracker[task] = plannedHoursTracker[task] || {};
+  const wkKey = String(weekNum);
+
+  plannedHoursTracker[task].budgets = plannedHoursTracker[task].budgets || {};
+
+  if (valueDec == null) {
+    delete plannedHoursTracker[task].budgets[wkKey];
+  } else {
+    plannedHoursTracker[task].budgets[wkKey] = valueDec;  // horas em decimal
+  }
+}
+
 
 function displayBudgetOverview() {
   updatePlannedLabel();
@@ -2405,8 +2955,10 @@ function displayBudgetOverview() {
   const filterValue = document.getElementById('modalTaskFilter').value.toLowerCase();
 
   // 2) Monta o overview[task][date] = totalSeconds
-  //    ↳ agora respeita o department activo
-  const aggregatedData = aggregateData(storedData);
+//    ✅ AGORA respeita exatamente os filtros da Home (incluindo Pay Code)
+const sourceData = getFilteredData();     // <- vem do cache do filterTable()
+const aggregatedData = aggregateData(sourceData);
+
 
   const aggregatedDataFiltered =
         currentDepartmentFilter === 'All'
@@ -2429,18 +2981,44 @@ function displayBudgetOverview() {
     overview[tsk][dateKey] += h*3600 + m*60 + s;
   });
 
-  // 3) Gera sempre as 7 datas (domingo→sábado) da semana corrente
-let dates = [];
+  let dates = [];
+let currentWeek = null;
+
 if (aggregatedDataFiltered.length) {
-  const firstRow = aggregatedDataFiltered[0];
-  const weekNum  = firstRow.week;
-  const [, , yy] = firstRow.date.split('/').map(Number);
-  const [weekStart, weekEnd] = getWeekRange(yy, weekNum);
+  const weekNum = aggregatedDataFiltered[0].week;
+  currentWeek   = Number(weekNum);
+
+  // ✅ FIX: descobre o ANO dominante nos dados filtrados desta semana
+  const yearForWeek = (() => {
+    const counts = {}; // { 2025: 10, 2026: 2, ... }
+
+    aggregatedDataFiltered.forEach(e => {
+      if (String(e.week) !== String(weekNum)) return;
+      if (!e.date) return;
+
+      const parts = String(e.date).split('/').map(Number);
+      if (parts.length !== 3) return;
+
+      const y = parts[2];
+      if (!y || isNaN(y)) return;
+
+      counts[y] = (counts[y] || 0) + 1;
+    });
+
+    const years = Object.keys(counts);
+    if (!years.length) return new Date().getFullYear();
+
+    // mais frequente; empate → ano mais recente
+    years.sort((a, b) => (counts[b] - counts[a]) || (Number(b) - Number(a)));
+    return Number(years[0]);
+  })();
+
+  const [weekStart, weekEnd] = getWeekRange(yearForWeek, weekNum);
+
   for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
     dates.push(d.toLocaleDateString('en-GB'));
   }
 }
-
 
   // 4) Soma apenas as tasks que passam no filtro
   const tasksToSum = Object.keys(overview)
@@ -2461,11 +3039,12 @@ if (aggregatedDataFiltered.length) {
   });
 
   // ─── NOVO BLOCO (logo após somar sumConsumed e sumPlannedSeconds) ───
-  // 5.0) Soma TOTAL de todos os budgets (em segundos)
   const sumBudgetSeconds = tasksToSum.reduce((sum, tsk) => {
-    const bd = plannedHoursTracker[tsk]?.budget;
-    return sum + (bd != null ? bd * 3600 : 0);
-  }, 0);
+  if (currentWeek == null) return sum;
+  const bd = getBudgetForTaskWeek(tsk, currentWeek);   // horas
+  return sum + (bd != null ? bd * 3600 : 0);
+}, 0);
+
   // ───────────────────────────────────────────────────────────────────
 
   // 5) Atualiza os rótulos dinâmicos de KPI
@@ -2603,8 +3182,11 @@ Object.keys(overview)
     });
 
     // ── NOVO: célula Budget Restante com seta ──
-const budgetDec = (plannedHoursTracker[tsk]?.budget) || 0;
+const budgetDec = currentWeek != null
+  ? (getBudgetForTaskWeek(tsk, currentWeek) || 0)
+  : 0;
 const budgetSec = budgetDec * 3600;
+
 // subtrai o total consumido na semana
 const remainSec = budgetSec - weekConsumedSec;
 // escolhe a seta conforme sobra ou estoura
@@ -2632,72 +3214,248 @@ tbody.appendChild(tr);
 
 function filterTable() {
   const employeeFilter      = document.getElementById('employeeFilter').value.toLowerCase();
-  const taskFilterRaw = document.getElementById('taskFilter').value.toLowerCase().trim();
-const taskFilters   = taskFilterRaw
-  ? taskFilterRaw.split(/[,;]+/).map(s => s.trim()).filter(Boolean)
-  : [];
+  const typeFilter          = document.getElementById('typeFilter')
+                             ? document.getElementById('typeFilter').value.toLowerCase()
+                             : '';
+  const taskFilterRaw       = document.getElementById('taskFilter').value.toLowerCase().trim();
+  const taskFilters         = taskFilterRaw
+    ? taskFilterRaw.split(/[,;]+/).map(s => s.trim()).filter(Boolean)
+    : [];
 
   const labourAccountFilter = document.getElementById('labourAccountFilter').value.toLowerCase();
   const payCodeFilter       = document.getElementById('payCodeFilter').value.toLowerCase();
   const weekFilter          = document.getElementById('selectWeek').value;
   const monthFilter         = document.getElementById('selectMonth').value;
   const codeFilter          = document.getElementById('codeFilter').value;
-  const dateFilter          = document.getElementById('dateFilter').value;
+window.currentCodeFilter  = codeFilter;
 
-  const rows = document.querySelectorAll('#resultTable tbody tr');
+// ✅ NOVO: identifica o modo "OT > 40h (Week)" mesmo que o value tenha mudado
+const isOt40WeekMode =
+  String(codeFilter || '').toLowerCase() === 'overtime' ||
+  String(codeFilter || '').toLowerCase() === 'ot40';
 
-  let grossSeconds  = 0,
-      loggedSeconds = 0,
-      filteredData  = [];
+const dateFilter          = document.getElementById('dateFilter').value;
 
-  rows.forEach(row => {
+// ✅ (legacy-safe) OT People dropdown (mesmo que não exista no HTML, não quebra nada)
+const otPeopleEl = document.getElementById('otPeopleFilter');
+const otPersonFilter = otPeopleEl ? otPeopleEl.value.trim() : '';
+
+const rows = document.querySelectorAll('#resultTable tbody tr');
+
+
+  // ─────────────────────────────────────────────
+// 1) Somar horas base de OT
+const weeklyTotals       = {}; // AGY: chave person|week -> segundos semana
+const dailyTotalsCore    = {}; // CORE: chave person|week|date -> segundos dia
+
+rows.forEach(row => {
   const cells = row.getElementsByTagName('td');
+  if (!cells.length) return;
+
+  const typeText     = cells[1].textContent.trim().toLowerCase();
+  const personNumber = cells[2].textContent.trim();
+  const dateText     = cells[4].textContent.trim();  // DD/MM/YYYY
+  const weekText     = cells[5].textContent.trim();
+  const hoursText    = cells[11].textContent.trim(); // Total Hours (HH:MM:SS)
+
+  if (!personNumber || !weekText) return;
+  if (!hoursText || hoursText === 'N/A') return;
+
+  const [h = 0, m = 0, s = 0] = hoursText.split(':').map(Number);
+  const secs = h * 3600 + m * 60 + s;
+
+  const isCore = (typeText === 'core');
+
+  if (isCore) {
+    const keyDay = `${personNumber}|${weekText}|${dateText}`;
+    dailyTotalsCore[keyDay] = (dailyTotalsCore[keyDay] || 0) + secs;
+  } else {
+    const keyWeek = `${personNumber}|${weekText}`;
+    weeklyTotals[keyWeek] = (weeklyTotals[keyWeek] || 0) + secs;
+  }
+});
+
+  // ─────────────────────────────────────────────
+  // 1.1) Quanto de OT existe em cada linha
+  //      - CORE  → acima de 8h/dia
+  //      - AGY   → acima de 40h/semana
+  // ─────────────────────────────────────────────
+  const overtimeByRow = new Map();  // row → segundos de OT nesta linha
+
+// ✅ calcula SEMPRE (para podermos usar no rótulo OT mesmo sem filtro "overtime")
+const overtimeRemainingWeek = {}; // AGY: person|week   → OT por distribuir
+const overtimeRemainingCore = {}; // CORE: person|week|date → OT por distribuir
+
+// AGY / outros: OT semanal > 40h
+Object.entries(weeklyTotals).forEach(([key, totalSec]) => {
+  const otSec = Math.max(0, totalSec - 40 * 3600);
+  overtimeRemainingWeek[key] = otSec;
+});
+
+// CORE: OT diária > 8h
+Object.entries(dailyTotalsCore).forEach(([key, totalSec]) => {
+  const otSec = Math.max(0, totalSec - 8 * 3600);
+  overtimeRemainingCore[key] = otSec;
+});
+
+// distribui OT pelas linhas na mesma ordem
+rows.forEach(row => {
+  const cells = row.getElementsByTagName('td');
+  if (!cells.length) return;
+
+  const typeText     = cells[1].textContent.trim().toLowerCase();
+  const personNumber = cells[2].textContent.trim();
+  const dateText     = cells[4].textContent.trim();
+  const weekText     = cells[5].textContent.trim();
+  const hoursText    = cells[11].textContent.trim();
+
+  if (!personNumber || !weekText) return;
+  if (!hoursText || hoursText === 'N/A') return;
+
+  const [h = 0, m = 0, s = 0] = hoursText.split(':').map(Number);
+  const secsRow = h * 3600 + m * 60 + s;
+
+  let otThisRow = 0;
+
+  if (typeText === 'core') {
+    const keyDay = `${personNumber}|${weekText}|${dateText}`;
+    const otLeft = overtimeRemainingCore[keyDay] || 0;
+
+    if (otLeft > 0) {
+      otThisRow = Math.min(secsRow, otLeft);
+      overtimeRemainingCore[keyDay] = otLeft - otThisRow;
+    }
+  } else {
+    const keyWeek = `${personNumber}|${weekText}`;
+    const otLeft  = overtimeRemainingWeek[keyWeek] || 0;
+
+    if (otLeft > 0) {
+      otThisRow = Math.min(secsRow, otLeft);
+      overtimeRemainingWeek[keyWeek] = otLeft - otThisRow;
+    }
+  }
+
+  overtimeByRow.set(row, otThisRow);
+});
+
+// ✅ deixa acessível para o updateOvertimeLabel()
+window.overtimeByRow = overtimeByRow;
+// ✅ NOVO: Set de pessoas com OT por semana (person|week)
+const otPersonWeekSet = new Set();
+
+rows.forEach(row => {
+  const otSec = overtimeByRow.get(row) || 0;
+  if (otSec <= 0) return;
+
+  const cells = row.getElementsByTagName('td');
+  if (!cells.length) return;
+
+  const personNumber = (cells[2]?.textContent || '').trim();
+  const weekText     = (cells[5]?.textContent || '').trim();
+
+  if (!personNumber || !weekText) return;
+
+  otPersonWeekSet.add(`${personNumber}|${weekText}`);
+});
+
+
+  // ─────────────────────────────────────────────
+  // 2) Loop “oficial” para filtros e KPI’s
+  // ─────────────────────────────────────────────
+ grossSeconds     = 0;
+loggedSeconds    = 0;
+let filteredData     = [],
+    totalWorkSeconds = 0;
+
+// ✅ NOVO: total OT por Pessoa|Semana (para o filtro OT não “cortar” linhas)
+const otByPersonWeek = new Map();
+
+rows.forEach(r => {
+  const c = r.getElementsByTagName('td');
+  if (!c.length) return;
+
+  const pNum = c[2].textContent.trim(); // Person Number
+  const wk   = c[5].textContent.trim(); // Week
+  if (!pNum || !wk) return;
+
+  const key = `${pNum}|${wk}`;
+  const ot  = overtimeByRow.get(r) || 0;
+
+  otByPersonWeek.set(key, (otByPersonWeek.get(key) || 0) + ot);
+});
+
+// 🔻 loop principal continua igual
+rows.forEach(row => {
+  const cells = row.getElementsByTagName('td');
+  if (!cells.length) return;
 
   const employeeText      = cells[0].textContent.toLowerCase();
-  const roleText          = cells[2].textContent.trim();
-  const dateText          = cells[3].textContent.trim();
-  const taskText          = cells[8].textContent.trim();
+  const typeText          = cells[1].textContent.toLowerCase();  // TYPE
+  const personNumber      = cells[2].textContent.trim();
+  const roleText          = cells[3].textContent.trim();
+  const dateText          = cells[4].textContent.trim();
+  const weekText          = cells[5].textContent.trim();
+  const monthText         = cells[6].textContent.trim();
+  const labourAccountText = cells[7].textContent.toLowerCase();
+  const departmentText    = cells[8].textContent.trim();
+  const taskText          = cells[9].textContent.trim();
   const taskTextLC        = taskText.toLowerCase();
-  const labourAccountText = cells[6].textContent.toLowerCase();
-  const payCodeText       = cells[10].textContent.toLowerCase();
-  const weekText          = cells[4].textContent;
-  const monthText         = cells[5].textContent;
-  const hoursText         = cells[9].textContent;
+  const hoursText         = cells[11].textContent.trim();
+  const payCodeText       = cells[12].textContent.toLowerCase();
 
-  // multitask: vírgula ou “;” → OR
   const matchesTask =
     taskFilters.length === 0 ||
     taskFilters.some(f => taskTextLC.includes(f));
 
-  /* ──────────── filtros “normais” ──────────── */
   let show =
     employeeText.includes(employeeFilter) &&
     labourAccountText.includes(labourAccountFilter) &&
-    matchesTask;   // 👈 aqui é a troca — antes usava taskFilter
+    matchesTask;
 
-  if (payCodeFilter && payCodeText !== payCodeFilter) show = false;
-  if (weekFilter    && weekText    !== weekFilter)    show = false;
-  if (monthFilter   && monthText   !== monthFilter)   show = false;
+  // 🔹 Filtro TYPE (dinâmico como os outros)
+  if (typeFilter && !typeText.includes(typeFilter)) show = false;
 
 
-    /* ─────────── filtro por departamento ─────────── */
-    if (currentDepartmentFilter && currentDepartmentFilter !== 'All') {
+        // ─────────── filtro Pay Code (dropdown + multi-select) ───────────
+    let passesPayCode = true;
 
-      if (currentDepartmentFilter === 'Break') {
-        // Break agora não vem mais na coluna Dep., então:
-        const isBreakRow =
-          labourAccountText.endsWith('4010') ||      // LA termina em 4010
-          taskText.toLowerCase().includes('paid break');
+    // 1) Lógica ORIGINAL – dropdown simples (1 Pay Code)
+    if (payCodeFilter && payCodeText !== payCodeFilter) {
+      passesPayCode = false;
+    }
 
-        if (!isBreakRow) show = false;
-
-      } else {
-        const deptText = cells[7].textContent;       // Ecom / Retail / IT …
-        if (deptText !== currentDepartmentFilter) show = false;
+    // 2) NOVO – multi-select (painel com checkboxes)
+    if (window.selectedPayCodes && window.selectedPayCodes.size > 0) {
+      // se o código da linha NÃO estiver na lista seleccionada → reprova
+      if (!window.selectedPayCodes.has(payCodeText)) {
+        passesPayCode = false;
       }
     }
 
-    /* ─────────── filtros adicionais ─────────── */
+    if (!passesPayCode) show = false;
+
+    if (weekFilter    && weekText    !== weekFilter)    show = false;
+    if (monthFilter   && monthText   !== monthFilter)   show = false;
+
+    // ─────────── filtro por departamento ───────────
+    if (currentDepartmentFilter && currentDepartmentFilter !== 'All') {
+      if (currentDepartmentFilter === 'Break') {
+        const labourDigits = String(cells[7]?.textContent || '').replace(/\D/g, '');
+const taskLC2      = String(cells[9]?.textContent || '').toLowerCase();
+
+const isBreakRow =
+  labourDigits.endsWith('4010') ||
+  /-4010\b/.test(taskLC2) ||
+  taskLC2.includes('paid break');
+
+if (!isBreakRow) show = false;
+
+      } else {
+        if (departmentText !== currentDepartmentFilter) show = false;
+      }
+    }
+
+    // ─────────── filtros adicionais ───────────
     if (codeFilter === 'manager'     && roleText !== 'Manager')    show = false;
     if (codeFilter === 'operative'   && roleText !== 'Operative')  show = false;
     if (codeFilter === 'missingTask' && !taskText.endsWith('Missing Task-0000')) show = false;
@@ -2708,72 +3466,131 @@ const taskFilters   = taskFilterRaw
       if (isoDate !== dateFilter) show = false;
     }
 
-    /* ─────────── mostra / esconde a linha ─────────── */
+        // ─────────── filtro específico OT > 40h (Week) ───────────
+if (isOt40WeekMode) {
+
+
+  // ✅ Break NÃO entra neste modo (Break = Over Spending, não OT)
+  const depText      = String(cells[8]?.textContent || '').trim(); // Dep.
+  const labourDigits = String(cells[7]?.textContent || '').replace(/\D/g, '');
+  const taskLC2      = String(cells[9]?.textContent || '').toLowerCase();
+
+  const isBreakRow =
+    depText === 'Break' ||                    // ✅ extra proteção
+    labourDigits.endsWith('4010') ||          // cobre 1007654010, 4010, etc
+    /-4010\b/.test(taskLC2) ||                // cobre "...-4010"
+    taskLC2.includes('paid break');           // fallback
+
+  if (isBreakRow) {
+    show = false;
+  } else {
+    const key = `${personNumber}|${weekText}`;
+    const otForWeek = otByPersonWeek.get(key) || 0;
+
+    // mostra TODAS as linhas da semana (exceto Break) se houver OT na semana
+    if (otForWeek <= 0) show = false;
+  }
+}
+
+// mostra / esconde a linha
     row.style.display = show ? '' : 'none';
 
-    /* ─────────── acumula totais ─────────── */
-    if (show && hoursText && hoursText !== 'N/A') {
-      const [h = 0, m = 0, s = 0] = hoursText.split(':').map(Number);
-      const secs  = h * 3600 + m * 60 + s;
-      grossSeconds += secs;
+    // ─────────── acumula totais ───────────
+if (show && hoursText && hoursText !== 'N/A') {
+  const [h = 0, m = 0, s = 0] = hoursText.split(':').map(Number);
+  const secsRow  = h * 3600 + m * 60 + s;
 
-      if (taskText.toLowerCase() !== 'n/a') {
-        loggedSeconds += secs;
-        filteredData.push({
-          department: cells[7].textContent.toLowerCase(),
-          totalHoursFormatted: hoursText
-        });
-      }
+  // ✅ SEMPRE conta a linha inteira (mesmo no modo OT > 40h)
+  grossSeconds += secsRow;
+
+  if (taskTextLC !== 'n/a') {
+    loggedSeconds += secsRow;
+
+    if (secsRow > 0) {
+      filteredData.push({
+        department         : departmentText.toLowerCase(),
+        totalHoursFormatted: formatTime(secsRow)
+      });
     }
-  });
+  }
+}
+});
 
-  /* ─────────── KPI’s na parte de cima ─────────── */
+  // ─────────── KPI’s na parte de cima ───────────
   document.getElementById('grossHours').textContent  = formatTime(grossSeconds);
   document.getElementById('loggedHours').textContent = formatTime(loggedSeconds);
 
   const diffSec   = grossSeconds - loggedSeconds;
   const absDiff   = Math.abs(diffSec);
   const unloggedEl = document.getElementById('depTotalHours');
-  unloggedEl.textContent = (diffSec === 0 ? '' : diffSec > 0 ? '+' : '-') + formatTime(absDiff);
+  unloggedEl.textContent =
+    (diffSec === 0 ? '' : diffSec > 0 ? '+' : '-') + formatTime(absDiff);
   unloggedEl.style.color = diffSec === 0 ? 'green' : 'red';
 
-  /* …cálculos dos totais… */
-
-// ======================= NOVO BLOCO =======================
-// Guarda num cache global (`window.filteredRowsCache`) todos os
-// registos que estão visíveis na tabela – já respeitando todos
-// os filtros aplicados na aba Home.
+         // ======================= CACHE VISÍVEL =======================
 window.filteredRowsCache = [];
 rows.forEach(row => {
   if (row.style.display !== 'none') {
     const cells = row.getElementsByTagName('td');
+
+    // ✅ FAIL-SAFE: no modo OT > 40h (Week), não guardar linhas Break
+    if (isOt40WeekMode) {
+      const depText      = String(cells[8]?.textContent || '').trim(); // Dep.
+      const labourDigits = String(cells[7]?.textContent || '').replace(/\D/g, '');
+      const taskLC2      = String(cells[9]?.textContent || '').toLowerCase();
+
+      const isBreakRow =
+        depText === 'Break' ||
+        labourDigits.endsWith('4010') ||
+        /-4010\b/.test(taskLC2) ||
+        taskLC2.includes('paid break');
+
+      if (isBreakRow) return; // 👈 ignora esta linha no cache
+    }
+
+    // ✅ SEMPRE guarda as horas reais da célula
+    const totalHoursText = (cells[11].textContent || '').trim();
+
     window.filteredRowsCache.push({
       employee           : cells[0].textContent.trim(),
-      personNumber       : cells[1].textContent.trim(),
-      role               : cells[2].textContent.trim(),
-      date               : cells[3].textContent.trim(),   // DD/MM/YYYY
-      week               : cells[4].textContent.trim(),
-      month              : cells[5].textContent.trim(),
-      labourAccount      : cells[6].textContent.trim(),
-      department         : cells[7].textContent.trim(),
-      task               : cells[8].textContent.trim(),
-      totalHoursFormatted: cells[9].textContent.trim(),
-      payCode            : cells[10].textContent.trim()
+      personNumber       : cells[2].textContent.trim(),
+      role               : cells[3].textContent.trim(),
+      date               : cells[4].textContent.trim(),
+      week               : cells[5].textContent.trim(),
+      month              : cells[6].textContent.trim(),
+      labourAccount      : cells[7].textContent.trim(),
+      department         : cells[8].textContent.trim(),
+      task               : cells[9].textContent.trim(),
+      totalHoursFormatted: totalHoursText,
+      payCode            : cells[12].textContent.trim()
     });
   }
 });
-// ==========================================================
+
+   // ==========================================================
+// 🔹 actualiza o KPI de Over Time com base nos dados actualmente visíveis
+updateOvertimeLabel();
+
+// ✅ OT People dropdown (se existir). Se removeste do HTML, isto NÃO quebra nada.
+if (document.getElementById('otPeopleFilter') && typeof populateOTPeopleDropdown === 'function') {
+  populateOTPeopleDropdown();
+}
 
 updateFilteredTotals(filteredData);
 updateHeadcount();
-  updateMissingTaskCount();
+updateMissingTaskCount();
+updateMissingTaskHours();
 
-// ------------------ NOVO BLOCO (Passo 5) ------------------
-  if (document.getElementById('dashboard').classList.contains('active')) {
-    renderDashboard();
-  }
-// ----------------------------------------------------------
+// ✅ NOVO: se estiver na aba Budget Tracker, re-renderiza o overview com os filtros atuais
+if (document.getElementById('budgetTracker')?.classList.contains('active')) {
+  displayBudgetOverview();
 }
+
+if (document.getElementById('dashboard').classList.contains('active')) {
+  renderDashboard();
+}
+}
+
 // ======================= NOVO BLOCO (helper) =======================
 // Retorna as linhas actualmente visíveis (se houver filtros activos);
 // caso contrário devolve o array completo `storedData`.  Usado pelo
@@ -2785,6 +3602,592 @@ function getFilteredData() {
            : storedData;
 }
 // ==================================================================
+
+// ★ KPI de Over Time (total + %)
+// Agora:
+// - CORE  → OT diária (acima de 8h/dia)
+// - AGY   → OT semanal (acima de 40h/semana)
+// - respeita os filtros activos (Employee, Type, Task, Dept, Week, Month, Date, etc.)
+// ★ NOVO: função única de cálculo de Over Time (CORE vs Agência)
+// Agora alinhada com o download Excel:
+// - CORE  → OT diária > 8h/dia (soma excesso de cada dia)
+// - AGY   → OT semanal > 40h/semana
+// =========================
+// OT People Dropdown (AGY weekly > 40h)
+// =========================
+function getOTPeopleWeeklyOver40(baseSource, allEntries) {
+  allEntries  = allEntries  || storedData || [];
+  baseSource  = baseSource  || [];
+
+  // chaves permitidas person|week vindas dos filtros atuais (exceto o próprio dropdown)
+  const allowedKeys = new Set();
+
+  baseSource.forEach(e => {
+    const person = e.personNumber;
+    const week   = e.week;
+    if (!person || !week) return;
+    allowedKeys.add(`${person}|${week}`);
+  });
+
+  // soma total por person|week, mas só para as keys permitidas
+  const weeklyTotals = {};    // key person|week -> totalSec
+  const nameByPerson = {};    // person -> employee (1º que aparecer)
+  const typeByKey    = {};    // key person|week -> type (core/247/extra/etc)
+
+  allEntries.forEach(e => {
+    const person = e.personNumber;
+    const week   = e.week;
+    if (!person || !week) return;
+
+    const key = `${person}|${week}`;
+    if (!allowedKeys.has(key)) return;
+
+    if (!nameByPerson[person]) nameByPerson[person] = e.employee || person;
+
+    if (!typeByKey[key] && typeof getEmployeeType === 'function') {
+      typeByKey[key] = (getEmployeeType(e.employee || '') || '').toLowerCase();
+    }
+
+    const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
+    if (!time || time === 'N/A') return;
+
+    const [h=0,m=0,s=0] = String(time).split(':').map(Number);
+    const sec = h*3600 + m*60 + s;
+
+    weeklyTotals[key] = (weeklyTotals[key] || 0) + sec;
+  });
+
+  // calcula OT semanal > 40h apenas para AGY/247/Extra (não CORE)
+  const otByPerson = {}; // person -> otSec
+
+  Object.entries(weeklyTotals).forEach(([key, totalSec]) => {
+    const typeLC = (typeByKey[key] || '').toLowerCase();
+
+    const isAgency =
+      typeLC.includes('agy') ||
+      typeLC.includes('247') ||
+      typeLC.includes('extr'); // Extra
+
+    if (!isAgency) return;
+
+    const otSec = Math.max(0, totalSec - 40 * 3600);
+    if (otSec <= 0) return;
+
+    const person = key.split('|')[0];
+    otByPerson[person] = (otByPerson[person] || 0) + otSec;
+  });
+
+  // devolve lista ordenada
+  return Object.entries(otByPerson)
+    .map(([personNumber, otSec]) => ({
+      personNumber,
+      employee: nameByPerson[personNumber] || personNumber,
+      otSec
+    }))
+    .sort((a,b) => b.otSec - a.otSec);
+}
+
+function populateOTPeopleDropdown() {
+  const sel = document.getElementById('otPeopleFilter');
+  if (!sel) return;
+
+  // baseSource = linhas "visíveis pelos filtros atuais" (sem aplicar o filtro deste dropdown)
+  // vamos montar um "baseSource" a partir do storedData aplicando Week/Month/Date/Dept/Task/Labour/PayCode/Type, etc.
+  // mas IGNORANDO employeeFilter e IGNORANDO o próprio otPeopleFilter.
+  const weekFilter   = document.getElementById('selectWeek')?.value || '';
+  const monthFilter  = document.getElementById('selectMonth')?.value || '';
+  const dateFilter   = document.getElementById('dateFilter')?.value || '';
+  const taskFilterRaw = (document.getElementById('taskFilter')?.value || '').toLowerCase().trim();
+  const taskFilters = taskFilterRaw ? taskFilterRaw.split(/[,;]+/).map(s=>s.trim()).filter(Boolean) : [];
+  const labourFilter = (document.getElementById('labourAccountFilter')?.value || '').toLowerCase();
+  const typeFilter   = (document.getElementById('typeFilter')?.value || '').toLowerCase();
+  const payCodeFilter1 = (document.getElementById('payCodeFilter')?.value || '').toLowerCase();
+  const payCodeSet   = (window.selectedPayCodes && window.selectedPayCodes.size > 0) ? window.selectedPayCodes : null;
+
+  const hasTask = taskFilters.length > 0;
+
+  const baseSource = (storedData || []).filter(e => {
+    // Week
+    if (weekFilter && String(e.week) !== String(weekFilter)) return false;
+
+    // Month
+    if (monthFilter && String(e.month) !== String(monthFilter)) return false;
+
+    // Date (dateFilter está em ISO yyyy-mm-dd)
+    if (dateFilter) {
+      const [d,m,y] = String(e.date || '').split('/');
+      const iso = `${y}-${String(m||'').padStart(2,'0')}-${String(d||'').padStart(2,'0')}`;
+      if (iso !== dateFilter) return false;
+    }
+
+    // Department slicer
+    if (currentDepartmentFilter && currentDepartmentFilter !== 'All') {
+      if (currentDepartmentFilter === 'Break') {
+        const labour = String(e.labourAccount || '').toLowerCase();
+        const taskLC = String(e.task || '').toLowerCase();
+        const isBreak =
+          labour.endsWith('4010') || taskLC.includes('paid break') || taskLC.includes('break');
+        if (!isBreak) return false;
+      } else {
+        if (String(e.department || '') !== String(currentDepartmentFilter)) return false;
+      }
+    }
+
+    // Labour Account
+    if (labourFilter && !String(e.labourAccount || '').toLowerCase().includes(labourFilter)) return false;
+
+    // Task (multi)
+    if (hasTask) {
+      const t = String(e.task || '').toLowerCase();
+      if (!taskFilters.some(f => t.includes(f))) return false;
+    }
+
+    // Type (CORE/247/Extra...)
+    if (typeFilter) {
+      const t = (typeof getEmployeeType === 'function')
+        ? String(getEmployeeType(e.employee || '') || '').toLowerCase()
+        : '';
+      if (!t.includes(typeFilter)) return false;
+    }
+
+    // Pay Code (dropdown simples)
+    if (payCodeFilter1) {
+      if (String(e.payCode || '').toLowerCase() !== payCodeFilter1) return false;
+    }
+
+    // Pay Code (multi)
+    if (payCodeSet) {
+      const pc = String(e.payCode || '').toLowerCase();
+      if (!payCodeSet.has(pc)) return false;
+    }
+
+    return true;
+  });
+
+  const list = getOTPeopleWeeklyOver40(baseSource, storedData);
+
+  // preserva seleção atual se possível
+  const prev = sel.value || '';
+  sel.innerHTML = '<option value="">All</option>';
+
+  list.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.personNumber;
+    opt.textContent = `${p.employee} (${p.personNumber}) — OT: ${formatTime(p.otSec)}`;
+    sel.appendChild(opt);
+  });
+
+  // restaura se ainda existir
+  const stillExists = Array.from(sel.options).some(o => o.value === prev);
+  sel.value = stillExists ? prev : '';
+}
+
+function computeOvertimeFromEntries(baseSource, allEntries) {
+  // baseSource = dados filtrados (ex.: linhas visíveis ou intervalo de datas)
+  allEntries = allEntries || storedData || [];
+  baseSource = baseSource || [];
+
+  // 1) chaves pessoa|semana que estão dentro dos filtros
+  const allowedKeys = new Set();   // "personNumber|week"
+  const typeByKey   = {};          // "person|week" -> tipo ("core", "247", "extra")
+
+  baseSource.forEach(e => {
+    const person = e.personNumber;
+    const week   = e.week;
+    if (!person || !week) return;
+
+    const key = `${person}|${week}`;
+    allowedKeys.add(key);
+
+    // guarda o TYPE (CORE, 247, Extra, etc.) se a função estiver disponível
+    if (!typeByKey[key] && typeof getEmployeeType === 'function') {
+      const type = getEmployeeType(e.employee || '');
+      typeByKey[key] = (type || '').toLowerCase();
+    }
+  });
+
+  // 2) soma das horas:
+  //    - por semana (para AGY: 40h/sem)
+  //    - por dia (para CORE: 8h/dia)
+  const weeklyTotals    = {};   // person|week       -> totalSegundosNaSemana
+  const dailyTotalsCore = {};   // person|week|date  -> totalSegundosNoDia (apenas CORE)
+
+  allEntries.forEach(e => {
+    const person = e.personNumber;
+    const week   = e.week;
+    const date   = e.date;              // "DD/MM/YYYY"
+    if (!person || !week || !date) return;
+
+    const key = `${person}|${week}`;
+    if (!allowedKeys.has(key)) return;  // só semanas/pessoas dentro do filtro
+
+    const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
+    if (!time || time === 'N/A') return;
+
+    const [h = 0, m = 0, s = 0] = time.split(':').map(Number);
+    const sec = h * 3600 + m * 60 + s;
+
+    // total da semana (usado para AGY e p/ total de horas)
+    weeklyTotals[key] = (weeklyTotals[key] || 0) + sec;
+
+    // descobrir se é CORE ou AGY para este person|week
+    const typeLC = (typeByKey[key] || '').toLowerCase();
+    const isAgency =
+      typeLC.includes('agy') ||
+      typeLC.includes('247') ||
+      typeLC.includes('extr');
+
+    // para CORE, guardamos também o total por dia
+    if (!isAgency) {
+      const dayKey = `${person}|${week}|${date}`;
+      dailyTotalsCore[dayKey] = (dailyTotalsCore[dayKey] || 0) + sec;
+    }
+  });
+
+  // 3) Aplica regras de OT
+  let overtimeTotalSec = 0;
+  let baseTotalSec     = 0;
+
+  // 3.1) Base de horas = total de horas trabalhadas (CORE + AGY)
+  Object.values(weeklyTotals).forEach(totalSec => {
+    baseTotalSec += totalSec;
+  });
+
+  // 3.2) OT de AGY → semanal acima de 40h
+  Object.entries(weeklyTotals).forEach(([key, totalSec]) => {
+    const typeLC = (typeByKey[key] || '').toLowerCase();
+    const isAgency =
+      typeLC.includes('agy') ||
+      typeLC.includes('247') ||
+      typeLC.includes('extr');
+
+    if (!isAgency) return;
+
+    const baseSec = 40 * 3600;
+    const overSec = Math.max(0, totalSec - baseSec);
+    overtimeTotalSec += overSec;
+  });
+
+  // 3.3) OT de CORE → diária acima de 8h em cada dia
+  Object.values(dailyTotalsCore).forEach(totalDaySec => {
+    const baseSecDay = 8 * 3600;
+    const overSecDay = Math.max(0, totalDaySec - baseSecDay);
+    overtimeTotalSec += overSecDay;
+  });
+
+  return { overtimeTotalSec, baseTotalSec };
+}
+
+// ★ NOVO – calcula "Over Spending" só para Break:
+//    - baseSource = dados filtrados (normalmente só Break quando estás no slicer Break)
+function computeBreakOverspendingFromEntries(baseSource) {
+  baseSource = baseSource || [];
+  
+  let totalBreakSec = 0;
+  const perPersonDay = {};   // chave: person|date -> segundos de break no dia
+
+  baseSource.forEach(e => {
+    const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
+    if (!time || time === 'N/A') return;
+
+    const [h = 0, m = 0, s = 0] = time.split(':').map(Number);
+    const sec = h * 3600 + m * 60 + s;
+    totalBreakSec += sec;
+
+    const person = e.personNumber || e.employee || '';
+    const date   = e.date || '';
+    if (!person || !date) return;
+
+    const key = `${person}|${date}`;
+    perPersonDay[key] = (perPersonDay[key] || 0) + sec;
+  });
+
+  // allowance: 33 minutos de break por dia
+  const dailyAllowanceSec = 33 * 60;
+  let overspendSec = 0;
+
+  Object.values(perPersonDay).forEach(totalDaySec => {
+    if (totalDaySec > dailyAllowanceSec) {
+      overspendSec += (totalDaySec - dailyAllowanceSec);
+    }
+  });
+
+  return { overspendSec, totalBreakSec };
+}
+// ★ NOVO – Over Time por Task / linha, usando Pay Code "Over..." como overtime
+function computeTaskOvertimeFromEntries(baseSource) {
+  baseSource = baseSource || [];
+
+  let totalSec    = 0; // todas as horas do task (visíveis)
+  let overtimeSec = 0; // só linhas com Pay Code de overtime
+
+  baseSource.forEach(e => {
+    const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
+    if (!time || time === 'N/A') return;
+
+    const [h = 0, m = 0, s = 0] = time.split(':').map(Number);
+    const sec = h * 3600 + m * 60 + s;
+    totalSec += sec;
+
+    const payCode = (e.payCode || '').toLowerCase();
+    // aqui assumimos que os pay codes de OT têm "over" no nome
+    if (payCode.includes('over')) {
+      overtimeSec += sec;
+    }
+  });
+
+  return { totalSec, overtimeSec };
+}
+// ★ NOVO – devolve linhas de Over Spending por pessoa/dia (Break)
+function getBreakOverspendingRows(baseSource) {
+  baseSource = baseSource || [];
+
+  const perPersonDay = {}; // key: person|date -> { person, date, totalSec }
+
+  baseSource.forEach(e => {
+    const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
+    if (!time || time === 'N/A') return;
+
+    const [h = 0, m = 0, s = 0] = time.split(':').map(Number);
+    const sec = h * 3600 + m * 60 + s;
+
+    const person = e.personNumber || e.employee || '';
+    const date   = e.date || '';
+    if (!person || !date) return;
+
+    const key = `${person}|${date}`;
+    if (!perPersonDay[key]) {
+      perPersonDay[key] = { person, date, totalSec: 0 };
+    }
+    perPersonDay[key].totalSec += sec;
+  });
+
+  const dailyAllowanceSec = 33 * 60; // 33 min
+
+  const rows = [];
+  Object.values(perPersonDay).forEach(obj => {
+    const overspendSec = Math.max(0, obj.totalSec - dailyAllowanceSec);
+    if (overspendSec <= 0) return; // só queremos quem passou dos 33 min
+    rows.push({
+      person        : obj.person,
+      date          : obj.date,
+      totalBreakSec : obj.totalSec,
+      overspendSec
+    });
+  });
+
+  return rows;
+}
+// ✅ OT semanal correto: soma por Employee|Week e aplica max(0, total-40h)
+function computeWeeklyOTFromEntries(entries) {
+  const perEmpWeek = new Map();
+
+  // ✅ NOVO: guarda quem tem OT (>40h) na(s) semana(s) presentes
+  const eligibleEmployees = new Set();
+
+  let baseTotalSec = 0;
+
+  const toSec = (e) => {
+    // 1) se tiver decimal (mais fiável)
+    const dec =
+      (typeof e.hoursDec === 'number' ? e.hoursDec : null) ??
+      (typeof e.hoursDecimal === 'number' ? e.hoursDecimal : null) ??
+      (typeof e.totalHoursDec === 'number' ? e.totalHoursDec : null) ??
+      (typeof e.totalHoursDecimal === 'number' ? e.totalHoursDecimal : null);
+
+    if (dec != null && Number.isFinite(dec)) return Math.round(dec * 3600);
+
+    // 2) fallback: HH:MM:SS
+    const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
+    if (!time || time === 'N/A') return 0;
+    const [h = 0, m = 0, s = 0] = String(time).split(':').map(Number);
+    return (h * 3600) + (m * 60) + s;
+  };
+
+  // helper: normaliza chave do empregado (para bater certinho com filtros)
+  const normEmp = (e) =>
+    String(e.employee || e.Employee || e.name || '').trim().toLowerCase();
+
+  entries.forEach(e => {
+    const emp = normEmp(e);
+    const wk  = String(e.week || e.Week || '').trim();
+
+    if (!emp || !wk) return;
+
+    const sec = toSec(e);
+    baseTotalSec += sec;
+
+    const key = `${emp}|${wk}`;
+    perEmpWeek.set(key, (perEmpWeek.get(key) || 0) + sec);
+  });
+
+  const THRESHOLD_SEC = 40 * 3600;
+  let overtimeTotalSec = 0;
+
+  // ✅ NOVO: calcula OT e marca elegíveis
+  perEmpWeek.forEach((sumSec, key) => {
+    const ot = Math.max(0, sumSec - THRESHOLD_SEC);
+    overtimeTotalSec += ot;
+
+    if (ot > 0) {
+      const empOnly = key.split('|')[0]; // já vem normalizado (lowercase)
+      eligibleEmployees.add(empOnly);
+    }
+  });
+
+  return { eligibleEmployees, overtimeTotalSec, baseTotalSec };
+}
+
+
+function updateOvertimeLabel() {
+  // 0) Se não houver dados, mostra 0 e sai
+  if (!storedData || !storedData.length) {
+    let overtimeEl =
+      document.getElementById('overtimeLabel') ||
+      document.querySelector('[data-kpi="overtime"]');
+
+    if (!overtimeEl) {
+      overtimeEl = Array.from(
+        document.querySelectorAll('span,div,p,strong,td,th')
+      ).find(el => el.textContent.trim().startsWith('Over Time:'));
+    }
+
+    if (overtimeEl) {
+      overtimeEl.innerHTML =
+        'Over Time: ' +
+        '<span style="font-weight:bold; color:#c1121f;">0:00:00</span>' +
+        '<span style="margin-left:8px; font-size:0.9em; font-weight:bold; color:#004d99;">Total W/h: 0:00:00</span>' +
+        '<span style="margin-left:8px; font-size:0.9em; font-weight:bold; color:#2e7d32;">0.00%</span>';
+    }
+    return;
+  }
+
+  // 1) Fonte base → linhas actualmente visíveis (Home + Dept + Week + Month + Date, etc.)
+  const baseSource =
+    (window.filteredRowsCache && window.filteredRowsCache.length)
+      ? window.filteredRowsCache
+      : storedData;
+
+  if (!baseSource.length) {
+    let overtimeEl =
+      document.getElementById('overtimeLabel') ||
+      document.querySelector('[data-kpi="overtime"]');
+
+    if (!overtimeEl) {
+      overtimeEl = Array.from(
+        document.querySelectorAll('span,div,p,strong,td,th')
+      ).find(el => el.textContent.trim().startsWith('Over Time:'));
+    }
+
+    if (overtimeEl) {
+      overtimeEl.innerHTML =
+        'Over Time: ' +
+        '<span style="font-weight:bold; color:#c1121f;">0:00:00</span>' +
+        '<span style="margin-left:8px; font-size:0.9em; font-weight:bold; color:#004d99;">Total W/h: 0:00:00</span>' +
+        '<span style="margin-left:8px; font-size:0.9em; font-weight:bold; color:#2e7d32;">0.00%</span>';
+    }
+    return;
+  }
+
+  // 1.1) Encontra o elemento da label (vamos reutilizar nos dois modos)
+  let overtimeEl =
+    document.getElementById('overtimeLabel') ||
+    document.querySelector('[data-kpi="overtime"]');
+
+  if (!overtimeEl) {
+    overtimeEl = Array.from(
+      document.querySelectorAll('span,div,p,strong,td,th')
+    ).find(el =>
+      el.textContent.trim().startsWith('Over Time:') ||
+      el.textContent.trim().startsWith('Over Spending:')
+    );
+  }
+  if (!overtimeEl) return;
+
+  // =========================
+  // MODO BREAK = OVER SPENDING
+  // =========================
+  if (currentDepartmentFilter === 'Break') {
+    const { overspendSec, totalBreakSec } =
+      computeBreakOverspendingFromEntries(baseSource);
+
+    const overspendText = formatTime(overspendSec);
+    const totalBreakText = formatTime(totalBreakSec);
+
+    const percent = totalBreakSec > 0
+      ? (overspendSec / totalBreakSec) * 100
+      : 0;
+
+    const percentColor = percent > 5 ? '#c1121f' : '#2e7d32';
+
+    overtimeEl.innerHTML =
+      'Over Spending: ' +
+      `<span style="font-weight:bold; color:#c1121f;">${overspendText}</span>` +
+      `<span style="margin-left:8px; font-size:0.9em; font-weight:bold; color:#004d99;">Total Break: ${totalBreakText}</span>` +
+      `<span style="margin-left:8px; font-size:0.9em; font-weight:bold; color:${percentColor};">` +
+        `${percent.toFixed(2)}%` +
+      `</span>`;
+
+    return; // 👈 não cai na lógica normal de Over Time
+  }
+
+ // =========================
+// MODO NORMAL = OVER TIME (CORE + AGY)
+// =========================
+
+const codeFilter = window.currentCodeFilter || '';
+
+// 1) total visível (Gross)
+let visibleGrossSec = 0;
+baseSource.forEach(e => {
+  const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
+  if (!time || time === 'N/A') return;
+  const [h = 0, m = 0, s = 0] = time.split(':').map(Number);
+  visibleGrossSec += h * 3600 + m * 60 + s;
+});
+// ✅ NOVO: OT semanal real (ignora PayCode/Task/Labour cut para o rótulo)
+const weeklyOT      = computeWeeklyOTFromEntries(baseSource, storedData);
+const weeklyBaseSec = weeklyOT.baseTotalSec || 0;        // total real (semana)
+const weeklyOtSec   = weeklyOT.overtimeTotalSec || 0;    // OT real (>40h)
+
+// 2) detectar “cortes” (dept/date/labour/task/paycode)
+//    ↳ se houver corte, OT tem de vir do overtimeByRow (por linha)
+const hasDeptCut   = currentDepartmentFilter && currentDepartmentFilter !== 'All';
+const hasDateCut   = !!(document.getElementById('dateFilter')?.value || '').trim();
+const hasLabCut    = !!(document.getElementById('labourAccountFilter')?.value || '').trim();
+const hasTaskCut   = !!(document.getElementById('taskFilter')?.value || '').trim();
+const hasPayCut1   = !!(document.getElementById('payCodeFilter')?.value || '').trim();
+const hasPayCut2   = (window.selectedPayCodes && window.selectedPayCodes.size > 0);
+
+const hasAnyCut = hasDeptCut || hasDateCut || hasLabCut || hasTaskCut || hasPayCut1 || hasPayCut2;
+
+// 3) OT visível (✅ sempre OT real >40h por pessoa/semana)
+let visibleOtSec = weeklyOtSec;
+
+// 4) Base do % (✅ Total W/h = total real semanal, não o recorte do Pay Code)
+const baseSecForLabel = weeklyBaseSec;
+
+
+// 5) percent
+const overtimePercent = baseSecForLabel > 0
+  ? (visibleOtSec / baseSecForLabel) * 100
+  : 0;
+
+const baseHoursText     = formatTime(baseSecForLabel);
+const overtimeHoursText = formatTime(visibleOtSec);
+
+const percentColor = overtimePercent > 5 ? '#c1121f' : '#2e7d32';
+
+overtimeEl.innerHTML =
+  'Over Time: ' +
+  `<span style="font-weight:bold; color:#c1121f;">${overtimeHoursText}</span>` +
+  `<span style="margin-left:8px; font-size:0.9em; font-weight:bold; color:#004d99;">Total W/h: ${baseHoursText}</span>` +
+  `<span style="margin-left:8px; font-size:0.9em; font-weight:bold; color:${percentColor};">` +
+    `${overtimePercent.toFixed(2)}%` +
+  `</span>`;
+
+
+}
 
       function updateFilteredTotals(filteredData) {
         let ecomMinutes    = 0,
@@ -2805,18 +4208,19 @@ function getFilteredData() {
       function updateResult() {
   const plannedBudget = parseFloat(document.getElementById('budgetInput').value);
   const resultBox = document.getElementById('resultBox');
+
   if (isNaN(plannedBudget)) {
     resultBox.style.display = 'none';
     return;
   }
 
-  // transforma o orçamento (em horas) em segundos
+  // 1) Orçamento (horas → segundos)
   const budgetSeconds = plannedBudget * 3600;
 
-  // grossMinutes na verdade está em segundos
-  const remainingSec = budgetSeconds - grossMinutes;
+  // 2) Usa o TOTAL BRUTO actualmente visível (grossSeconds global)
+  const remainingSec = budgetSeconds - grossSeconds;
 
-  // calcula horas e minutos absolutos
+  // 3) Converte diferença em HH:MM (sempre valor absoluto, com sinal separado)
   const absSec = Math.abs(remainingSec);
   const h = Math.floor(absSec / 3600);
   const m = Math.floor((absSec % 3600) / 60);
@@ -2824,7 +4228,7 @@ function getFilteredData() {
 
   const resultTime = `${sign}${h}:${m.toString().padStart(2, '0')}`;
 
-  // exibe em vermelho se negativo, verde se positivo
+  // 4) Mostra vermelho se consumiu mais que o budget, verde se ainda tem folga
   if (remainingSec < 0) {
     resultBox.innerHTML = `Result: <span style="color: red; font-weight: bold;">${resultTime}</span>`;
   } else {
@@ -2833,6 +4237,7 @@ function getFilteredData() {
 
   resultBox.style.display = 'block';
 }
+
 window.updateResult = updateResult;
 
 
@@ -2841,7 +4246,7 @@ window.updateResult = updateResult;
         resultBox.style.display = (resultBox.style.display === 'none' || resultBox.style.display === '') ? 'block' : 'none';
       }
 
-      function clearData() {
+            function clearData() {
         displayResults([]);
         document.getElementById('resultBox').innerHTML = '';
         document.getElementById('grossHours').textContent = '0:00';
@@ -2850,9 +4255,11 @@ window.updateResult = updateResult;
         document.getElementById('totalEcom').textContent = '0:00';
         document.getElementById('totalRetail').textContent = '0:00';
         document.getElementById('totalBreak').textContent = '0:00';
-        grossMinutes = 0;
+        grossSeconds = 0;            // ⬅ aqui
+        grossMinutes = 0;            // se ainda usar em algum lugar legado
         originalTotalMinutes = 0;
       }
+
 
       function filterByDate() {
         const startDateInput = document.getElementById('startDate').value;
@@ -2879,49 +4286,701 @@ window.updateResult = updateResult;
         document.getElementById('startDate').value = '';
         document.getElementById('endDate').value = '';
       }
+function applyExcel1904(wb) {
+  if (!wb) return;
+  wb.Workbook = wb.Workbook || {};
+  wb.Workbook.WBProps = wb.Workbook.WBProps || {};
+  wb.Workbook.WBProps.date1904 = true;
+}
 
-      function downloadExcelReportBetweenDates() {
-        const startDateInput = document.getElementById('startDate').value;
-        const endDateInput = document.getElementById('endDate').value;
-        if (!startDateInput || !endDateInput) {
-          alert('Please select both start and end dates.');
-          return;
-        }
-        const startDate = new Date(startDateInput);
-        const endDate = new Date(endDateInput);
-        if (isNaN(startDate) || isNaN(endDate)) {
-          alert('Please enter valid start and end dates.');
-          return;
-        }
-        const filteredData = storedData.filter(entry => {
-          const entryDate = new Date(entry.date.split('/').reverse().join('-'));
-          return entryDate >= startDate && entryDate <= endDate;
-        });
-        if (filteredData.length === 0) {
-          alert('No data available for the selected dates.');
-          return;
-        }
-        const wb = XLSX.utils.book_new();
-        const ws_data = [['Employee', 'Person Number', 'Date', 'Week', 'Month', 'Labour Account', 'Dep.', 'Task', 'Total Hours']];
-        filteredData.forEach(entry => {
-          ws_data.push([
-            entry.employee,
-            entry.personNumber,
-            entry.date,
-            entry.week,
-            entry.month,
-            entry.labourAccount,
-            entry.department,
-            entry.task,
-            entry.totalHoursFormatted
-          ]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        XLSX.utils.book_append_sheet(wb, ws, "Report");
-        XLSX.writeFile(wb, `budget_tracker_report_${startDateInput}_to_${endDateInput}.xlsx`);
+            function downloadExcelReportBetweenDates() {
+  const startDateInput = document.getElementById('startDate').value;
+  const endDateInput   = document.getElementById('endDate').value;
+
+  if (!startDateInput || !endDateInput) {
+    alert('Please select both start and end dates.');
+    return;
+  }
+
+  const startDate = new Date(startDateInput);
+  const endDate   = new Date(endDateInput);
+
+  if (isNaN(startDate) || isNaN(endDate)) {
+    alert('Please enter valid start and end dates.');
+    return;
+  }
+
+  // Filtra o storedData pelo intervalo seleccionado
+  const filteredData = storedData.filter(entry => {
+    const entryDate = new Date(entry.date.split('/').reverse().join('-'));
+    return entryDate >= startDate && entryDate <= endDate;
+  });
+
+  if (filteredData.length === 0) {
+    alert('No data available for the selected dates.');
+    return;
+  }
+
+  // ---- helpers internos ----------------------------------------------------
+  function parseBrDate(str) {
+    const [d, m, y] = String(str).split('/').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function parseTimeToSeconds(value) {
+    if (!value || value === 'N/A') return 0;
+    const parts = String(value).split(':').map(Number);
+    const h = parts[0] || 0;
+    const m = parts[1] || 0;
+    const s = parts[2] || 0;
+    return h * 3600 + m * 60 + s;
+  }
+
+  function secondsToHours(sec) {
+    return sec / 3600;
+  }
+
+  function styleSheet(ws) {
+    if (!ws['!ref']) return;
+    const range = XLSX.utils.decode_range(ws['!ref']);
+
+    // Cabeçalho em bold (linha 0)
+    const headerRow = range.s.r; // normalmente 0
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellAddress = XLSX.utils.encode_cell({ r: headerRow, c: C });
+      const cell = ws[cellAddress];
+      if (!cell) continue;
+      cell.s = cell.s || {};
+      cell.s.font = cell.s.font || {};
+      cell.s.font.bold = true;
+    }
+
+    // AutoFit simples (baseado no comprimento do texto)
+    const colWidths = [];
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      let maxLen = 10;
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        const addr = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = ws[addr];
+        if (!cell || cell.v == null) continue;
+        const len = String(cell.v).length;
+        if (len > maxLen) maxLen = len;
+      }
+      colWidths.push({ wch: maxLen + 2 });
+    }
+    ws['!cols'] = colWidths;
+
+    // Filtros no cabeçalho
+    ws['!autofilter'] = { ref: ws['!ref'] };
+  }
+
+  function getEmployeeGroup(employeeName) {
+    const name = String(employeeName || '');
+    if (/^247\b/i.test(name))   return 'AGY 247';
+    if (/^extra\b/i.test(name)) return 'AGY J&T';
+    return 'CORE';
+  }
+
+  // ---- workbook ------------------------------------------------------------
+  const wb = XLSX.utils.book_new();
+
+  // =====================================================================
+  //  SHEET 1: DETAILS  (espelha a tabela Home)
+  // =====================================================================
+  const wsData = [[
+    'Employee',
+    'Type',
+    'Person Number',
+    'Role',
+    'Date',
+    'Week',
+    'Month',
+    'Labour Account',
+    'Dep.',
+    'Task',
+    'Hours Dec.',   // nova coluna
+    'Total Hours',
+    'Pay Code'
+  ]];
+
+  filteredData.forEach(entry => {
+    // calcula horas em decimal (igual à lógica da Home)
+    let hoursDec;
+    if (typeof entry.totalHoursDecimal === 'number') {
+      hoursDec = Number(entry.totalHoursDecimal.toFixed(2));
+    } else {
+      const t = entry.totalHoursFormatted || '00:00:00';
+      const [h = 0, m = 0, s = 0] = t.split(':').map(Number);
+      const dec = h + m / 60 + s / 3600;
+      hoursDec = Number(dec.toFixed(2));
+    }
+
+    wsData.push([
+      entry.employee,
+      getEmployeeType(entry.employee),  // mesma lógica da coluna TYPE da Home
+      entry.personNumber,
+      entry.role,
+      entry.date,
+      entry.week,
+      entry.month,
+      entry.labourAccount,
+      entry.department,
+      entry.task,
+      hoursDec,
+      entry.totalHoursFormatted,
+      entry.payCode
+    ]);
+  });
+
+  const wsDetail = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, wsDetail, 'Details');
+
+  // Converte datas e horas para tipos numéricos (Excel) + formatos bonitos
+  if (wsDetail['!ref']) {
+    const rangeDet = XLSX.utils.decode_range(wsDetail['!ref']);
+    for (let R = 1; R <= rangeDet.e.r; ++R) {
+      // Date (coluna 4)
+      const addrDate = XLSX.utils.encode_cell({ r: R, c: 4 });
+      const cellDate = wsDetail[addrDate];
+      if (cellDate && cellDate.v) {
+        const d = parseBrDate(cellDate.v);
+        cellDate.v = d;
+        cellDate.t = 'd';
+        cellDate.z = 'dd/mm/yyyy';
       }
 
-      // ---------- novo downloadBudgetReport ----------
+      // Total Hours (coluna 11)
+      const addrTime = XLSX.utils.encode_cell({ r: R, c: 11 });
+      const cellTime = wsDetail[addrTime];
+      if (cellTime && cellTime.v) {
+        const sec = parseTimeToSeconds(cellTime.v);
+        cellTime.v = sec / 86400; // parte do dia
+        cellTime.t = 'n';
+        cellTime.z = 'hh:mm';
+      }
+
+      // Hours Dec. (coluna 10)
+      const addrDec = XLSX.utils.encode_cell({ r: R, c: 10 });
+      const cellDec = wsDetail[addrDec];
+      if (cellDec && cellDec.v != null) {
+        cellDec.t = 'n';
+        cellDec.z = '0.00';
+      }
+    }
+  }
+
+  styleSheet(wsDetail);
+
+  // Auto-ajuste adicional para a coluna Date
+  const detCols = wsDetail['!cols'] || [];
+  detCols[4] = detCols[4] || {};
+  detCols[4].wch = 12;
+  wsDetail['!cols'] = detCols;
+
+  // =====================================================================
+  //  CÁLCULO DE OT POR LINHA (CORE 8h/dia, AGY 40h/semana)
+  // =====================================================================
+  const rowCount   = filteredData.length;
+  const otPerRow   = new Array(rowCount).fill(0);   // em segundos
+  const secPerRow  = new Array(rowCount).fill(0);   // em segundos
+
+  const perPersonWeekDay = {}; // chave: person|week|date
+  const perPersonWeek    = {}; // chave: person|week
+
+  filteredData.forEach((entry, idx) => {
+    const secs = parseTimeToSeconds(entry.totalHoursFormatted);
+    secPerRow[idx] = secs;
+
+    const person  = entry.personNumber || '';
+    const weekStr = String(entry.week || '');
+    const dateStr = entry.date;
+    if (!person || !weekStr || !dateStr || secs <= 0) return;
+
+    const group = getEmployeeGroup(entry.employee);
+
+    // --- agregação diária (CORE: 8h/dia) ---
+    const keyDay = `${person}|${weekStr}|${dateStr}`;
+    if (!perPersonWeekDay[keyDay]) {
+      perPersonWeekDay[keyDay] = { totalSec: 0, rows: [], group };
+    }
+    perPersonWeekDay[keyDay].totalSec += secs;
+    perPersonWeekDay[keyDay].rows.push({ idx, secs });
+
+    // --- agregação semanal (AGY: 40h/semana) ---
+    const keyWeek = `${person}|${weekStr}`;
+    if (!perPersonWeek[keyWeek]) {
+      perPersonWeek[keyWeek] = { totalSec: 0, rows: [], group };
+    }
+    perPersonWeek[keyWeek].totalSec += secs;
+    perPersonWeek[keyWeek].rows.push({ idx, secs, dateStr });
+  });
+
+  // ---- CORE: OT acima de 8h/dia -----------------------------
+  Object.values(perPersonWeekDay).forEach(groupObj => {
+    if (groupObj.group !== 'CORE') return;
+    let otLeft = Math.max(0, groupObj.totalSec - 8 * 3600);
+    if (otLeft <= 0) return;
+
+    for (const row of groupObj.rows) {
+      if (otLeft <= 0) break;
+      const portion = Math.min(row.secs, otLeft);
+      otPerRow[row.idx] += portion;
+      otLeft -= portion;
+    }
+  });
+
+  // ---- AGY: OT acima de 40h/semana --------------------------
+  Object.values(perPersonWeek).forEach(groupObj => {
+    if (groupObj.group === 'CORE') return; // só AGY
+    let otLeft = Math.max(0, groupObj.totalSec - 40 * 3600);
+    if (otLeft <= 0) return;
+
+    for (const row of groupObj.rows) {
+      if (otLeft <= 0) break;
+      const portion = Math.min(row.secs, otLeft);
+      otPerRow[row.idx] += portion;
+      otLeft -= portion;
+    }
+  });
+
+  // =====================================================================
+  //  AGREGADOS: POR PESSOA, POR DEPARTAMENTO, POR TASK
+  // =====================================================================
+  const personAgg = {}; // personNumber -> {employee, group, totalSec, otSec}
+  const deptAgg   = {}; // group -> {group, totalSec, otSec}
+  const taskAgg   = {}; // task  -> {task, totalSec, otSec}
+
+  filteredData.forEach((entry, idx) => {
+    const person = entry.personNumber || '';
+    const name   = entry.employee || '';
+    const task   = entry.task || 'N/A';
+    const group  = getEmployeeGroup(entry.employee);
+
+    const secs  = secPerRow[idx];
+    const otSec = otPerRow[idx];
+
+    // Pessoa
+    if (!personAgg[person]) {
+      personAgg[person] = {
+        employee    : name,
+        personNumber: person,
+        group,
+        totalSec    : 0,
+        otSec       : 0
+      };
+    }
+    personAgg[person].totalSec += secs;
+    personAgg[person].otSec    += otSec;
+
+    // Departamento
+    if (!deptAgg[group]) {
+      deptAgg[group] = { group, totalSec: 0, otSec: 0 };
+    }
+    deptAgg[group].totalSec += secs;
+    deptAgg[group].otSec    += otSec;
+
+    // Task
+    if (!taskAgg[task]) {
+      taskAgg[task] = { task, totalSec: 0, otSec: 0 };
+    }
+    taskAgg[task].totalSec += secs;
+    taskAgg[task].otSec    += otSec;
+  });
+
+  // =====================================================================
+  //  SHEET 2: OT_by_Person
+  // =====================================================================
+  const wsPersonData = [[
+    'Employee',
+    'Person Number',
+    'Group',
+    'Total Hours (h)',
+    'Over Time (h)',
+    'OT %'
+  ]];
+
+  Object.values(personAgg)
+    .sort((a, b) => b.otSec - a.otSec)
+    .forEach(p => {
+      const totalH = secondsToHours(p.totalSec);
+      const otH    = secondsToHours(p.otSec);
+      const pct    = totalH > 0 ? (otH / totalH) * 100 : 0;
+
+      wsPersonData.push([
+        p.employee,
+        p.personNumber,
+        p.group,
+        Number(totalH.toFixed(2)),
+        Number(otH.toFixed(2)),
+        Number(pct.toFixed(2))
+      ]);
+    });
+
+  const wsPerson = XLSX.utils.aoa_to_sheet(wsPersonData);
+  XLSX.utils.book_append_sheet(wb, wsPerson, 'OT_by_Person');
+  styleSheet(wsPerson);
+
+  // =====================================================================
+  //  SHEET 3: OT_by_Department
+  // =====================================================================
+  const wsDeptData = [[
+    'Group',
+    'Total Hours (h)',
+    'Over Time (h)',
+    'OT %'
+  ]];
+
+  Object.values(deptAgg)
+    .sort((a, b) => b.otSec - a.otSec)
+    .forEach(d => {
+      const totalH = secondsToHours(d.totalSec);
+      const otH    = secondsToHours(d.otSec);
+      const pct    = totalH > 0 ? (otH / totalH) * 100 : 0;
+
+      wsDeptData.push([
+        d.group,
+        Number(totalH.toFixed(2)),
+        Number(otH.toFixed(2)),
+        Number(pct.toFixed(2))
+      ]);
+    });
+
+  const wsDept = XLSX.utils.aoa_to_sheet(wsDeptData);
+  XLSX.utils.book_append_sheet(wb, wsDept, 'OT_by_Department');
+  styleSheet(wsDept);
+
+  // =====================================================================
+  //  SHEET 4: OT_by_Task
+  // =====================================================================
+  const wsTaskData = [[
+    'Task',
+    'Total Hours (h)',
+    'Over Time (h)',
+    'OT %'
+  ]];
+
+  Object.values(taskAgg)
+    .sort((a, b) => b.otSec - a.otSec)
+    .forEach(t => {
+      const totalH = secondsToHours(t.totalSec);
+      const otH    = secondsToHours(t.otSec);
+      const pct    = totalH > 0 ? (otH / totalH) * 100 : 0;
+
+      wsTaskData.push([
+        t.task,
+        Number(totalH.toFixed(2)),
+        Number(otH.toFixed(2)),
+        Number(pct.toFixed(2))
+      ]);
+    });
+
+  const wsTask = XLSX.utils.aoa_to_sheet(wsTaskData);
+  XLSX.utils.book_append_sheet(wb, wsTask, 'OT_by_Task');
+  styleSheet(wsTask);
+
+  // =====================================================================
+  //  SHEET 5: OT_Insights
+  // =====================================================================
+  const topPersons = Object.values(personAgg)
+    .filter(p => p.otSec > 0)
+    .sort((a, b) => b.otSec - a.otSec)
+    .slice(0, 10);
+
+  const wsInsightData = [[
+    'Rank',
+    'Employee',
+    'Person Number',
+    'Group',
+    'Total OT (h)',
+    'Total Hours (h)',
+    'OT %'
+  ]];
+
+  topPersons.forEach((p, idx) => {
+    const totalH = secondsToHours(p.totalSec);
+    const otH    = secondsToHours(p.otSec);
+    const pct    = totalH > 0 ? (otH / totalH) * 100 : 0;
+
+    wsInsightData.push([
+      idx + 1,
+      p.employee,
+      p.personNumber,
+      p.group,
+      Number(otH.toFixed(2)),
+      Number(totalH.toFixed(2)),
+      Number(pct.toFixed(2))
+    ]);
+  });
+
+  const wsInsights = XLSX.utils.aoa_to_sheet(wsInsightData);
+  XLSX.utils.book_append_sheet(wb, wsInsights, 'OT_Insights');
+  styleSheet(wsInsights);
+
+  // =====================================================================
+  //  SHEET 6: Dashboard_KPI
+  // =====================================================================
+  let totalAllSec = 0;
+  let totalOTSec  = 0;
+
+  Object.values(personAgg).forEach(p => {
+    totalAllSec += p.totalSec;
+    totalOTSec  += p.otSec;
+  });
+
+  const totalAllH = secondsToHours(totalAllSec);
+  const totalOTH  = secondsToHours(totalOTSec);
+  const otFrac    = totalAllSec > 0 ? (totalOTSec / totalAllSec) : 0;
+
+  const top5Persons = Object.values(personAgg)
+    .sort((a, b) => b.otSec - a.otSec)
+    .slice(0, 5);
+
+  const top5Tasks = Object.values(taskAgg)
+    .sort((a, b) => b.otSec - a.otSec)
+    .slice(0, 5);
+
+  const topGroups = Object.values(deptAgg)
+    .sort((a, b) => b.otSec - a.otSec);
+
+  const dashData = [];
+
+  // KPI principais
+  dashData.push(['KPI', 'Value']);
+  dashData.push(['Total Hours (h)', Number(totalAllH.toFixed(2))]);
+  dashData.push(['Total OT (h)', Number(totalOTH.toFixed(2))]);
+  dashData.push(['OT %', otFrac]); // formatado como % no Excel
+
+  dashData.push(['', '']);
+
+  // OT por Grupo
+  dashData.push(['OT by Group', '']);
+  dashData.push(['Group', 'OT (h)']);
+  topGroups.forEach(g => {
+    dashData.push([
+      g.group,
+      Number(secondsToHours(g.otSec).toFixed(2))
+    ]);
+  });
+
+  dashData.push(['', '']);
+
+  // Top 5 – OT por Pessoa
+  dashData.push(['Top 5 – OT by Person', '']);
+  dashData.push(['Employee', 'OT (h)']);
+  top5Persons.forEach(p => {
+    dashData.push([
+      p.employee,
+      Number(secondsToHours(p.otSec).toFixed(2))
+    ]);
+  });
+
+  dashData.push(['', '']);
+
+  // Top 5 – OT por Task
+  dashData.push(['Top 5 – OT by Task', '']);
+  dashData.push(['Task', 'OT (h)']);
+  top5Tasks.forEach(t => {
+    dashData.push([
+      t.task,
+      Number(secondsToHours(t.otSec).toFixed(2))
+    ]);
+  });
+
+  const wsDash = XLSX.utils.aoa_to_sheet(dashData);
+  styleSheet(wsDash);
+
+  // Formatação especial para OT %
+  const dashRange = XLSX.utils.decode_range(wsDash['!ref']);
+  for (let R = 0; R <= dashRange.e.r; ++R) {
+    const addrLabel = XLSX.utils.encode_cell({ r: R, c: 0 });
+    const addrVal   = XLSX.utils.encode_cell({ r: R, c: 1 });
+    const cLabel    = wsDash[addrLabel];
+    const cVal      = wsDash[addrVal];
+
+    if (cLabel && cLabel.v === 'OT %' && cVal && typeof cVal.v === 'number') {
+      cVal.t = 'n';
+      cVal.z = '0.00%';
+    }
+  }
+
+  XLSX.utils.book_append_sheet(wb, wsDash, 'Dashboard_KPI');
+
+  // ======================================================
+//  SHEET 7: Overtime Detail (formatado como tempo real)
+// ======================================================
+(function () {
+  if (!filteredData || !filteredData.length) return;
+
+  const jsonData = [];
+
+  filteredData.forEach((entry, idx) => {
+    const otSec = otPerRow[idx] || 0;
+    if (otSec <= 0) return; 
+
+    const otDec  = otSec / 3600;      // decimal
+    const otXLS  = otSec / 86400;     // Excel time
+
+    jsonData.push({
+      Person     : entry.employee || entry.personNumber || '',
+      Date       : entry.date || '',
+      Task       : entry.task || '',
+      Type       : getEmployeeType(entry.employee),
+      HoursDec   : Number(otDec.toFixed(2)),  // duas casas decimais
+      TotalHours : otXLS                      // agora como tempo calculável
+    });
+  });
+
+  if (!jsonData.length) return;
+
+  const wsOT = XLSX.utils.json_to_sheet(jsonData);
+  styleSheet(wsOT);
+
+  // ------------------------
+  // FORMATAÇÃO DAS COLUNAS
+  // ------------------------
+  const range = XLSX.utils.decode_range(wsOT['!ref']);
+
+  for (let R = 1; R <= range.e.r; R++) {
+
+    // HoursDec (coluna E = index 4)
+    const addrDec = XLSX.utils.encode_cell({ r: R, c: 4 });
+    const cellDec = wsOT[addrDec];
+    if (cellDec) {
+      cellDec.t = 'n';
+      cellDec.z = '0.00';   // duas casas
+    }
+
+    // TotalHours (coluna F = index 5)
+    const addrTime = XLSX.utils.encode_cell({ r: R, c: 5 });
+    const cellTime = wsOT[addrTime];
+    if (cellTime) {
+      cellTime.t = 'n';
+      cellTime.z = '[hh]:mm:ss';  // tempo real calculável
+    }
+  }
+
+  XLSX.utils.book_append_sheet(wb, wsOT, 'Overtime Detail');
+})();
+
+
+    // ======================================================
+// ★ SHEET 8 – Break Overspending (cálculo real em Excel)
+// ======================================================
+(function () {
+  if (!filteredData || !filteredData.length) return;
+
+  const thresholdSec = 33 * 60; // 33 minutos
+
+  // Agrupa por pessoa + data
+  const map = new Map();
+
+  filteredData.forEach(entry => {
+    const taskName = (entry.task || '').toLowerCase();
+    const labour   = String(entry.labourAccount || '');
+
+    // Identificar Break (igual ao Dashboard)
+    const isBreak =
+      /break/.test(taskName) ||
+      labour.endsWith('4010') ||
+      /4010\b/.test(taskName) ||
+      /1007654010|1007684010/.test(labour);
+
+    if (!isBreak) return;
+
+    const person = entry.employee || entry.personNumber || '';
+    const date   = entry.date || '';
+    if (!person || !date) return;
+
+    const key = `${person}|${date}`;
+
+    const prev = map.get(key) || {
+      person,
+      date,
+      task: entry.task || 'E.Paid Break-4010',
+      totalSec: 0
+    };
+
+    const secs = parseTimeToSeconds(
+      entry.totalHoursFormatted || entry.totalHours || '00:00:00'
+    );
+
+    prev.totalSec += secs;
+
+    map.set(key, prev);
+  });
+
+  const rows = Array.from(map.values());
+  if (!rows.length) return;
+
+  // Criar JSON calculável
+  const jsonData = rows.map(r => {
+    const baselineSec = thresholdSec;              // 1980 sec
+    const consumedSec = r.totalSec;                // break real
+    const diffSec     = consumedSec - baselineSec; // positivo ou negativo
+
+    return {
+      Person        : r.person,
+      Date          : r.date,
+      Task          : r.task,
+      StandardBreak : baselineSec / 86400,     // Excel time
+      ConsumedBreak : consumedSec / 86400,     // Excel time
+      Difference    : diffSec / 86400          // Excel time (pode ser negativo)
+    };
+  });
+
+  const wsOS = XLSX.utils.json_to_sheet(jsonData);
+  styleSheet(wsOS);
+
+  // Formatos de tempo (inclusive negativo)
+  const range = XLSX.utils.decode_range(wsOS['!ref']);
+  for (let R = 1; R <= range.e.r; R++) {
+    // StandardBreak (coluna D = index 3)
+    const addrD = XLSX.utils.encode_cell({ r: R, c: 3 });
+    const cellD = wsOS[addrD];
+    if (cellD) { cellD.t = 'n'; cellD.z = '[hh]:mm:ss'; }
+
+    // ConsumedBreak (coluna E = index 4)
+    const addrE = XLSX.utils.encode_cell({ r: R, c: 4 });
+    const cellE = wsOS[addrE];
+    if (cellE) { cellE.t = 'n'; cellE.z = '[hh]:mm:ss'; }
+
+    // Difference (coluna F = index 5)
+    const addrF = XLSX.utils.encode_cell({ r: R, c: 5 });
+    const cellF = wsOS[addrF];
+    if (cellF) { cellF.t = 'n'; cellF.z = '[hh]:mm:ss'; }
+  }
+
+  XLSX.utils.book_append_sheet(wb, wsOS, 'Break Overspending');
+})();
+
+
+
+  // ======================================================
+  applyExcel1904(wb);
+XLSX.writeFile(wb, 'budget_tracker_report.xlsx');
+
+}
+
+// ---------- helper TYPE dropdown (fora de qualquer outra função) ----------
+function populateTypeDropdown() {
+  const typeSelect = document.getElementById('typeFilter');
+  if (!typeSelect) return;
+
+  // tipos calculados a partir do nome (usa a mesma lógica da tabela)
+  const types = [...new Set(storedData.map(e => getEmployeeType(e.employee)))]
+    .filter(Boolean)
+    .sort();
+
+  typeSelect.innerHTML = '<option value="">All</option>';
+  types.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    typeSelect.appendChild(opt);
+  });
+}
+
+// ---------- downloadBudgetReport ----------
 function downloadBudgetReport() {
   /* 1) Seleciona a tabela que está na tela */
   const table = document.getElementById('budgetTable');
@@ -2939,6 +4998,7 @@ function downloadBudgetReport() {
   /* 3) Faz o download do arquivo */
   XLSX.writeFile(wb, 'budget_tracker_budget_report.xlsx');
 }
+
 // ---------- fim ----------
 function populateDropdowns() {
   const weekDropdown  = document.getElementById('selectWeek');
@@ -3016,11 +5076,20 @@ function populateDropdowns() {
     // Filtragem base: por departamento
     // Filtragem base: por departamento (agora Break também via department)
 let baseData;
+
 if (currentDepartmentFilter === 'All') {
   baseData = storedData;
+
+} else if (currentDepartmentFilter === 'Break') {
+  baseData = (storedData || []).filter(e => {
+    const labour = String(e.labourAccount || '').toLowerCase();
+    const taskLC = String(e.task || '').toLowerCase();
+    const dep    = String(e.department || '');
+    return dep === 'Break' || labour.endsWith('4010') || taskLC.includes('break');
+  });
+
 } else {
-  // para QUALQUER departamento, inclusive 'Break', filtramos pelo campo department
-  baseData = storedData.filter(e => e.department === currentDepartmentFilter);
+  baseData = (storedData || []).filter(e => String(e.department || '') === String(currentDepartmentFilter));
 }
 
 
@@ -3034,7 +5103,12 @@ if (selectedMonth !== '') {
 }
 
 // ---------- LINHA ALTERADA (Passo 3) ----------
-const dashboardData = getFilteredData();
+// ✅ se houver cache (Home), usa cache; senão usa baseData (Dept/Week/Month)
+const dashboardData =
+  (window.filteredRowsCache && window.filteredRowsCache.length)
+    ? window.filteredRowsCache
+    : baseData;
+
 // ---------------------------------------------
 
 
@@ -3075,7 +5149,8 @@ Object.keys(consumedPerWeekSec).forEach(wk => {
   Object.entries(plannedHoursTracker).forEach(([tsk, datesObj]) => {
     if (!visibleTasks.has(tsk)) return;
     Object.entries(datesObj).forEach(([dateKey, dec]) => {
-      if (dateKey === 'budget') return;
+      if (dateKey === 'budget' || dateKey === 'budgets') return;
+
       const [d, m, y] = dateKey.split('/').map(Number);
       if (getCustomWeekNumber(new Date(y, m - 1, d)) === Number(wk)) {
         const key2 = `${tsk}|${dateKey}`;
@@ -3100,8 +5175,8 @@ document.getElementById('kpiMissing').style.color     = '#c1121f';
 // ————— Novo: mantém o texto fixo e só adiciona tooltip —————
 const dashboardPlannedLabel = document.getElementById('dashboardPlannedLabel');
 if (dashboardPlannedLabel) {
-  const filtered    = getFilteredData();
-  const uniqueTasks = [...new Set(filtered.map(e => e.task))];
+  const uniqueTasks = [...new Set(dashboardData.map(e => e.task))];
+
 
   // 1) sempre mostra "Planned Hours"
   dashboardPlannedLabel.textContent = 'Planned Hours';
@@ -3124,92 +5199,105 @@ if (window.trendChartObj) window.trendChartObj.destroy();
 
 // 1) Semanas presentes no objeto de consumo
 const weeks = Object.keys(consumedPerWeekSec).sort((a, b) => a - b);
+const weeksSet = new Set(weeks.map(w => String(w)));
 
-// 2) ────────────────────────────────────────────────────────────
-//    Budget Total (teto semanal) — respeita Dept / Week / Month
-// ───────────────────────────────────────────────────────────────
-let totalBudgetHours = 0;
-Object.entries(plannedHoursTracker).forEach(([tsk, plan]) => {
-  // (a) precisa ter budget numérico
-  if (typeof plan.budget !== 'number') return;
+// Helper interno: acumula budget por semana, com filtro opcional de tasks
+function accumulateBudgetHours(taskFilterFn) {
+  const budgetPerWeek = {}; // { week -> horas }
 
-  // (b) filtro por Departamento
-  if (currentDepartmentFilter !== 'All') {
-    const isEcom   = tsk.startsWith('E.');
-    const isRetail = tsk.startsWith('R.');
-    const isBreak  = /break/i.test(tsk);
-    if (
-         (currentDepartmentFilter === 'Ecom'   && !isEcom)   ||
-         (currentDepartmentFilter === 'Retail' && !isRetail) ||
-         (currentDepartmentFilter === 'Break'  && !isBreak)
-       ) return;
-  }
+  Object.entries(plannedHoursTracker).forEach(([tsk, plan]) => {
+    if (taskFilterFn && !taskFilterFn(tsk)) return;
 
-  // (c) filtro por Week (dropdown)
-  if (selectedWeek !== '') {
-    const hasWeek = Object.keys(plan).some(dateStr => {
-      if (dateStr === 'budget') return false;
-      const [d, m, y] = dateStr.split('/').map(Number);
-      return String(getCustomWeekNumber(new Date(y, m - 1, d))) === selectedWeek;
-    });
-    if (!hasWeek) return;
-  }
+    // (b) filtro por Departamento
+    if (currentDepartmentFilter !== 'All') {
+      const isEcom   = tsk.startsWith('E.');
+      const isRetail = tsk.startsWith('R.');
+      const isBreak  = /break/i.test(tsk);
+      if (
+           (currentDepartmentFilter === 'Ecom'   && !isEcom)   ||
+           (currentDepartmentFilter === 'Retail' && !isRetail) ||
+           (currentDepartmentFilter === 'Break'  && !isBreak)
+         ) return;
+    }
 
-  // (d) filtro por Month (dropdown)
-  if (selectedMonth !== '') {
-    const hasMonth = Object.keys(plan).some(dateStr => {
-      if (dateStr === 'budget') return false;
-      const [, m] = dateStr.split('/');
-      const monthName = new Date(`2024-${m}-01`)
-                          .toLocaleString('default', { month: 'long' });
-      return monthName === selectedMonth;
-    });
-    if (!hasMonth) return;
-  }
+    // NOVO: suporte a budget por semana (plan.budgets)
+    const budgetsObj = plan.budgets || null;
 
-  totalBudgetHours += plan.budget;          // já em horas decimais
-});
+    if (budgetsObj && Object.keys(budgetsObj).length) {
+      // cada chave = número da semana (ex.: "47", "48", "49")
+      Object.entries(budgetsObj).forEach(([weekKey, dec]) => {
+        const wk = String(weekKey);
+        if (!weeksSet.has(wk)) return; // só semanas presentes no gráfico
 
-// ─────────────────────────────────────────────────────────────
-// 3. Budget só das *tasks visíveis* (budgetVisibleHours)
-//    – também respeita Dept / Week / Month / filtros Home
-// ─────────────────────────────────────────────────────────────
-const visibleTasksSet   = new Set(dashboardData.map(e => e.task));
-let   budgetVisibleHours = 0;
+        // se houver filtro selectWeek, isso já está reflectido em weeks/consumedPerWeekSec
+        budgetPerWeek[wk] = (budgetPerWeek[wk] || 0) + (dec || 0);
+      });
+    } else if (typeof plan.budget === 'number') {
+      // fallback: estrutura antiga (um único budget por task)
+      // distribui apenas pelas semanas em que a task aparece nos dados visíveis
+      const taskWeeks = new Set(
+        dashboardData
+          .filter(e => e.task === tsk)
+          .map(e => String(e.week))
+      );
+      taskWeeks.forEach(wk => {
+        if (!weeksSet.has(wk)) return;
+        budgetPerWeek[wk] = (budgetPerWeek[wk] || 0) + plan.budget;
+      });
+    }
+  });
 
-visibleTasksSet.forEach(tsk => {
-  const plan = plannedHoursTracker[tsk];
-  if (!plan || typeof plan.budget !== 'number') return;
+  // soma total (só semanas que realmente aparecem no gráfico)
+  const totalHours = weeks.reduce(
+    (sum, wk) => sum + (budgetPerWeek[String(wk)] || 0),
+    0
+  );
 
-  /* filtro Week */
-  if (selectedWeek !== '') {
-    const hasWeek = Object.keys(plan).some(dateStr => {
-      if (dateStr === 'budget') return false;
-      const [d, m, y] = dateStr.split('/').map(Number);
-      return String(getCustomWeekNumber(new Date(y, m - 1, d))) === selectedWeek;
-    });
-    if (!hasWeek) return;
-  }
-  /* filtro Month */
-  if (selectedMonth !== '') {
-    const hasMonth = Object.keys(plan).some(dateStr => {
-      if (dateStr === 'budget') return false;
-      const [, m] = dateStr.split('/');
-      const monthName = new Date(`2024-${m}-01`)
-                          .toLocaleString('default', { month: 'long' });
-      return monthName === selectedMonth;
-    });
-    if (!hasMonth) return;
-  }
+  return { budgetPerWeek, totalHours };
+}
 
-  budgetVisibleHours += plan.budget;
-});
+// 3. Calcula Budget Total (todas as tasks) e Budget (Tasks Visíveis)
+const visibleTasksSet = new Set(dashboardData.map(e => e.task));
+
+const {
+  budgetPerWeek : budgetPerWeekAll,
+  totalHours    : totalBudgetHours
+} = accumulateBudgetHours(/* todas as tasks */);
+
+const {
+  budgetPerWeek : budgetPerWeekVisible,
+  totalHours    : budgetVisibleHours
+} = accumulateBudgetHours(tsk => visibleTasksSet.has(tsk));
+
+// ✅ NOVO: se houver filtros na HOME que estreitam as tasks,
+// forçamos Budget = "Tasks Visíveis" para não misturar tasks no gráfico/KPIs.
+const homeTaskFilter     = (document.getElementById('taskFilter')?.value || '').trim();
+const homeLabourFilter   = (document.getElementById('labourAccountFilter')?.value || '').trim();
+const homeEmployeeFilter = (document.getElementById('employeeFilter')?.value || '').trim();
+const homeTypeFilter     = (document.getElementById('typeFilter')?.value || '').trim();
+const homeDateFilter     = (document.getElementById('dateFilter')?.value || '').trim();
+const homePayCodeSingle  = (document.getElementById('payCodeFilter')?.value || '').trim();
+const homePayCodeMulti   = (window.selectedPayCodes && window.selectedPayCodes.size > 0);
+
+// ⚠️ estes filtros normalmente estreitam “quais tasks entram”
+const forceBudgetVisible =
+  !!homeTaskFilter ||
+  !!homeLabourFilter ||
+  !!homeEmployeeFilter ||
+  !!homeTypeFilter ||
+  !!homeDateFilter ||
+  !!homePayCodeSingle ||
+  !!homePayCodeMulti;
+
+// ✅ modo efetivo (respeita o toggle, mas filtros forçam Tasks)
+const showBudgetTotalEffective = showBudgetTotal && !forceBudgetVisible;
 
 // ────────────────────────────
 // 4. KPI “Budget Total / Budget (Tasks)”
 // ────────────────────────────
-const hoursToShow     = showBudgetTotal ? totalBudgetHours : budgetVisibleHours;
-const budgetBaseHours = hoursToShow;             // ← baseline único!
+const hoursToShow     = showBudgetTotalEffective ? totalBudgetHours : budgetVisibleHours;
+const budgetBaseHours = hoursToShow; // baseline único (mas agora consistente com filtros)
+
 const kpiBudgetTotalEl = document.getElementById('kpiBudgetTotal');
 const kpiBudgetLabelEl = document.getElementById('kpiBudgetLabel');
 
@@ -3218,10 +5306,10 @@ if (budgetBaseHours === 0) {
   kpiBudgetTotalEl.style.color = '#888';
 } else {
   kpiBudgetTotalEl.textContent = formatTimeHHMM(budgetBaseHours * 3600);
-  kpiBudgetTotalEl.style.color = showBudgetTotal ? '#004d99' : '#26a269';
+  kpiBudgetTotalEl.style.color = showBudgetTotalEffective ? '#004d99' : '#26a269';
 }
 
-kpiBudgetLabelEl.textContent = showBudgetTotal
+kpiBudgetLabelEl.textContent = showBudgetTotalEffective
   ? 'Budget Total'
   : 'Budget (Tasks)';
 
@@ -3254,12 +5342,16 @@ const utilEl = document.getElementById('kpiUtil');
 utilEl.textContent = budgetUtilPct.toFixed(2) + '%';
 utilEl.style.color = budgetUtilPct <= 100 ? 'green' : 'red';
 
-
 // ────────────────────────────
 // 7. Trend Chart (Consumed × Planned × Budget)
 // ────────────────────────────
-const budgetData = weeks.map(() => budgetVisibleHours);
+const budgetData = showBudgetTotalEffective
+  ? weeks.map(w => budgetPerWeekAll[String(w)] || 0)
+  : weeks.map(w => budgetPerWeekVisible[String(w)] || 0);
+
+
 const trendCtx   = document.getElementById('trendChart').getContext('2d');
+
 
 window.trendChartObj = new Chart(trendCtx, {
   type : 'bar',
@@ -3527,16 +5619,76 @@ window.deptChartObj = new Chart(deptCtx, {
   };
 
      // 1) listener do codeFilter (usa só filterTable, que já existe)
+// 1) listener do codeFilter (usa só filterTable, que já existe)
 document.getElementById('codeFilter').addEventListener('change', filterTable);
+
+/* =========================================================
+   ✅ NOVO (Opção B): desabilita "Over Time" no dropdown
+   - Mantém a opção visível (cinza)
+   - Não altera a lógica de cálculo do KPI de OT
+   ========================================================= */
+(function enableOvertimeOptionGlobally() {
+  const codeFilterEl = document.getElementById('codeFilter');
+  if (!codeFilterEl) return;
+
+  Array.from(codeFilterEl.options).forEach(opt => {
+    const v = String(opt.value || '').toLowerCase();
+    if (v === 'overtime') opt.disabled = false; // ✅ garante que OT fica disponível
+  });
+})();
+
 
 // 2) Definição da função filterByDepartment
 function filterByDepartment(dep) {
   currentDepartmentFilter = dep;
-  filterTable();  // atualiza a tabela
+
+  // ✅ NOVO: Em BREAK, desabilita só as opções OT e Missing Task (mantém All/Operative/Manager/etc.)
+  const codeFilterEl = document.getElementById('codeFilter');
+  if (codeFilterEl) {
+    const isBreak = (dep === 'Break');
+
+    
+
+
+    // 1) desabilita/reativa APENAS OT quando Break está ativo
+Array.from(codeFilterEl.options).forEach(opt => {
+  const v = String(opt.value || '').toLowerCase();
+  const t = String(opt.textContent || '').toLowerCase();
+
+  const isOT =
+    v === 'overtime' || v === 'ot' ||
+    t.includes('over time') || t.includes('overtime') ||
+    t.includes('ot > 40'); // (opcional, caso o texto já esteja renomeado)
+
+  if (isOT) {
+    opt.disabled = isBreak;   // ✅ Break: desativa | fora do Break: reativa
+  }
+});
+
+
+
+    // 2) se a opção atual estiver desativada → força ALL
+const selectedOpt = codeFilterEl.options[codeFilterEl.selectedIndex];
+if (selectedOpt && selectedOpt.disabled) {
+  codeFilterEl.value = '';
+  window.currentCodeFilter = '';
+}
+
+
+    // 3) estilo opcional só para indicar que “algumas opções” estão bloqueadas
+    codeFilterEl.title = isBreak
+  ? 'OT > 40h is disabled while Break is selected.'
+  : '';
+
+  }
+
+  // fluxo normal
+  filterTable();
   if (document.getElementById('dashboard').classList.contains('active')) {
-    renderDashboard();  // atualiza o dashboard se estiver visível
+    renderDashboard();
   }
 }
+
 
 // 3) listeners para os botões do slicer que chamam filterByDepartment
 document.querySelectorAll('#slicer button[data-department]').forEach(button => {
@@ -3593,27 +5745,49 @@ document.querySelectorAll('#slicer button[data-department]').forEach(button => {
         clearData();
       }
 
-      function updateHeadcount() {
-        const rows = document.querySelectorAll("#resultTable tbody tr");
-        const uniqueEmployeeDays = new Set();
-        rows.forEach(row => {
-          if (row.offsetParent !== null && row.querySelector("td")) {
-            const employeeName = row.querySelector("td:nth-child(1)").textContent.trim();
-            const dateText     = row.querySelector("td:nth-child(4)").textContent.trim();
-            if (employeeName && dateText && employeeName.toLowerCase() !== 'employee') {
-              const key = `${employeeName}|${dateText}`;
-              uniqueEmployeeDays.add(key);
-            }
-          }
-        });
-        const headcountSpan = document.getElementById("headcountCount");
-        headcountSpan.textContent = uniqueEmployeeDays.size;
-        headcountSpan.style.fontWeight = "bold";
-        headcountSpan.style.fontSize   = "1.3em";
-        headcountSpan.style.color      = (uniqueEmployeeDays.size === 0) ? "#ff8c00" : "#c1121f";
-      }
+     function updateHeadcount() {
+  const rows = document.querySelectorAll("#resultTable tbody tr");
+  const uniqueEmployeeDays = new Set(); // ✅ mantém o teu atual (Employee|Date)
+  const uniquePeople = new Set();       // ✅ NOVO (pessoas únicas)
 
-      // Listener para exportar Dashboard em PDF
+  rows.forEach(row => {
+    if (getComputedStyle(row).display === 'none') return;
+
+    const cells = row.cells;
+    if (!cells || cells.length < 5) return; // ✅ ignora linhas tipo "No results found"
+
+    const employeeName = (cells[0].textContent || '').trim(); // col 1
+    const dateText     = (cells[4].textContent || '').trim(); // col 5 (Date)
+    const personNumber = (cells[2].textContent || '').trim(); // col 3 (Person Number)
+
+    if (!employeeName || !dateText) return;
+
+    // 1) Presenças/dias (mantém como está)
+    uniqueEmployeeDays.add(`${employeeName}|${dateText}`);
+
+    // 2) Pessoas únicas (preferência: personNumber; fallback: employeeName)
+    const key = personNumber || employeeName.toLowerCase().replace(/\s+/g, ' ').trim();
+
+    if (key) uniquePeople.add(key);
+  });
+
+  const headcountSpan = document.getElementById("headcountCount");
+  if (!headcountSpan) return;
+
+  const totalDays = uniqueEmployeeDays.size;
+  const totalUnique = uniquePeople.size;
+
+  // ✅ Mostra no formato que queres
+  headcountSpan.textContent = `${totalDays} / ${totalUnique}`;
+headcountSpan.title = `Employee-days: ${totalDays} | Unique people: ${totalUnique}`;
+
+  headcountSpan.style.fontWeight = "bold";
+  headcountSpan.style.fontSize   = "1.3em";
+  headcountSpan.style.color      = (totalDays === 0) ? "#ff8c00" : "#c1121f";
+}
+
+
+  // Listener para exportar Dashboard em PDF
       document.getElementById('downloadPdfDashboard').addEventListener('click', function() {
         const dashboard = document.getElementById('dashboard');
         this.style.visibility = 'hidden';
@@ -3648,6 +5822,41 @@ function getFirstSundayOfYear(year) {
   const offset = (7 - d.getDay()) % 7; 
   return new Date(year, 0, 1 + offset);
 }
+
+// ✅ NOVO helper (coloca aqui)
+// ✅ ANO AUTOMÁTICO PARA A SEMANA DO MODAL
+function getYearForWeek(weekNum) {
+  // 1) Melhor caso: usa storedData (se houver entradas dessa semana)
+  const matches = (storedData || [])
+    .filter(e => String(e.week) === String(weekNum) && e.date)
+    .sort((a, b) => {
+      const [da, ma, ya] = a.date.split('/').map(Number);
+      const [db, mb, yb] = b.date.split('/').map(Number);
+      return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+    });
+
+  if (matches.length) {
+    const [, , y] = matches[0].date.split('/').map(Number);
+    return y; // ✅ ano real vindo dos dados
+  }
+
+  // 2) Fallback automático: decide pelo contexto do calendário
+  const now = new Date();
+  const currentYear  = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0=Jan ... 11=Dec
+
+  // Se estamos em Janeiro e o user escolhe semana alta (52/53),
+  // provavelmente é do ano anterior.
+  if (currentMonth === 0 && weekNum >= 52) return currentYear - 1;
+
+  // Se estamos em Dezembro e o user escolhe semana baixa (1/2),
+  // provavelmente é do ano seguinte.
+  if (currentMonth === 11 && weekNum <= 2) return currentYear + 1;
+
+  // Caso normal: ano corrente
+  return currentYear;
+}
+
 function getWeekRange(year, weekNumber) {
   const firstSunday = getFirstSundayOfYear(year);
   const start = new Date(firstSunday.getTime() + (weekNumber - 1) * 7 * 86400e3);
@@ -3679,16 +5888,19 @@ document.getElementById('openPlannedHoursModal').addEventListener('click', funct
   }
   localStorage.setItem('plannedModalWeek', weekNum);
 
-  inpWeek.addEventListener('change', () => {
-    const v = parseInt(inpWeek.value, 10);
-    if (!isNaN(v) && v >= 1 && v <= 53) {
-      localStorage.setItem('plannedModalWeek', v);
-      populateWeeklyPlannedTable();
-    }
-  });
+  inpWeek.onchange = () => {
+  const v = parseInt(inpWeek.value, 10);
+  if (!isNaN(v) && v >= 1 && v <= 53) {
+    localStorage.setItem('plannedModalWeek', v);
+    populateWeeklyPlannedTable();
+  }
+};
+
 
   // 3) Calcula intervalo de datas domingo→sábado
-  const [startDate, endDate] = getWeekRange(today.getFullYear(), weekNum);
+  const yearForWeek = getYearForWeek(weekNum);
+const [startDate, endDate] = getWeekRange(yearForWeek, weekNum);
+
   const dates = [];
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
     dates.push(new Date(d));
@@ -3785,16 +5997,19 @@ dates.forEach(dt => {
   tr.appendChild(td);
 });
 
- // ── NOVO: cell do Budget semanal ──
+ // ── NOVO: cell do Budget semanal (agora por semana) ──
 const budgetInp = document.createElement('input');
 budgetInp.type        = 'text';
 budgetInp.placeholder = 'HH:MM';
-const existingBudget  = plannedHoursTracker[tsk]?.budget;
+
+// lê o budget só desta semana
+const existingBudget = getBudgetForTaskWeek(tsk, weekNum);
 if (existingBudget != null) {
   const h = Math.floor(existingBudget);
   const m = Math.round((existingBudget - h) * 60);
   budgetInp.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
+
 // ←– VALIDAÇÃO: força refocar se formato inválido
 budgetInp.addEventListener('keydown', e => {
   if (e.key === 'Tab' || e.key === 'Enter') {
@@ -3838,7 +6053,9 @@ function populateWeeklyPlannedTable() {
                      : getCustomWeekNumber(today);
 
   // Gera as 7 datas domingo→sábado
-  const [startDate, endDate] = getWeekRange(today.getFullYear(), weekNum);
+  const yearForWeek = getYearForWeek(weekNum);
+const [startDate, endDate] = getWeekRange(yearForWeek, weekNum);
+
   const dates = [];
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
     dates.push(new Date(d));
@@ -3948,25 +6165,20 @@ dates.forEach(dt => {
   tr.appendChild(td);
 });
 
-    // ── NOVO: input Budget no fim da linha ──
+    // ── NOVO: input Budget no fim da linha (por semana) ──
 const budgetInp = document.createElement('input');
 budgetInp.type        = 'text';
 budgetInp.placeholder = 'HH:MM';
-const exBud           = plannedHoursTracker[tsk]?.budget;
+
+// usa a mesma weekNum calculada no topo da função
+const exBud = getBudgetForTaskWeek(tsk, weekNum);
 if (exBud != null) {
   const h = Math.floor(exBud);
   const m = Math.round((exBud - h) * 60);
   budgetInp.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-
-  // ── bloqueia edição após primeiro lançamento ──
-  budgetInp.readOnly = true;
-  budgetInp.addEventListener('focus', () => {
-    alert(
-      'These budget hours have already been set. To modify them, please use the Edit Hours function and enter the security code.'
-    );
-    budgetInp.blur();
-  });
 }
+
+
 budgetInp.dataset.task       = tsk;
 budgetInp.dataset.weekBudget = 'true';
 budgetInp.style              = 'width:60px; padding:4px; margin:2px;';
@@ -3996,9 +6208,15 @@ document.getElementById('cancelPlannedHours').addEventListener('click', function
   document.getElementById('plannedHoursModal').style.display = 'none';
 });
 
-// 2) Confirm: valida cada campo, depois grava
 document.getElementById('confirmPlannedHours')
   .addEventListener('click', function () {
+
+    /* 0. Descobre a semana atual do modal */
+    const today     = new Date();
+    const weekInput = parseInt(document.getElementById('modalWeekNumber').value, 10);
+    const weekNum   = (!isNaN(weekInput) && weekInput >= 1 && weekInput <= 53)
+      ? weekInput
+      : getCustomWeekNumber(today);
 
     /* 1. Coleta todos os inputs de hora da tabela */
     const inputs = document.querySelectorAll(
@@ -4012,38 +6230,47 @@ document.getElementById('confirmPlannedHours')
       if (val === '') continue;               // campo vazio é permitido
 
       if (!isValidHHMM(val)) {                // formato errado
-        alert('There are invalid times. Use HH:MM format, e.g., 07:30.');
+        alert('There are invalid times. Use HH:MM (e.g., 07:30) or decimal hours (e.g., 7.5).');
 
         inp.focus();                          // leva usuário ao erro
         return;                               // ⛔ aborta – nada será salvo
       }
+
+      // normaliza o campo para HH:MM usando a função nova
+      const dec = convertHHMMToDecimal(val);
+      inp.value = decimalToHHMM(dec);
     }
 
-    /* 3. Conversão HH:MM → decimal e gravação */
+    /* 3. Conversão (HH:MM ou decimal) → decimal e gravação */
     inputs.forEach(inp => {
       const val  = inp.value.trim();
       const task = inp.dataset.task;
       plannedHoursTracker[task] = plannedHoursTracker[task] || {};
 
-      /* 3a. Coluna “Budget” (weekBudget) */
-      if (inp.dataset.weekBudget === 'true') {
-        if (val) {
-          const [hh, mm] = val.split(':').map(Number);
-          plannedHoursTracker[task].budget = hh + mm / 60;
+      // nada escrito → limpa e segue
+      if (!val) {
+        if (inp.dataset.weekBudget === 'true') {
+          // APAGA o budget só para ESTA semana
+          setBudgetForTaskWeek(task, weekNum, null);
         } else {
-          delete plannedHoursTracker[task].budget;
+          const date = inp.dataset.date;
+          delete plannedHoursTracker[task][date];
         }
-        return;                               // não processa como dia
+        return;
       }
 
-      /* 3b. Colunas de dia da semana */
-      const date = inp.dataset.date;
-      if (val) {
-        const [hh, mm] = val.split(':').map(Number);
-        plannedHoursTracker[task][date] = hh + mm / 60;
-      } else {
-        delete plannedHoursTracker[task][date];
+      const dec = convertHHMMToDecimal(val);
+      if (dec == null) return; // segurança extra (já validado antes)
+
+      /* 3a. Coluna “Budget” (weekBudget) – agora por semana */
+      if (inp.dataset.weekBudget === 'true') {
+        setBudgetForTaskWeek(task, weekNum, dec);   // guarda em horas decimais
+        return;                                     // não processa como dia
       }
+
+      /* 3b. Colunas de dia da semana (diárias) */
+      const date = inp.dataset.date;
+      plannedHoursTracker[task][date] = dec;        // guarda em horas decimais
     });
 
     /* 4. Persiste, atualiza UI, fecha modal */
@@ -4054,6 +6281,7 @@ document.getElementById('confirmPlannedHours')
     displayBudgetOverview();
     document.getElementById('plannedHoursModal').style.display = 'none';
   });
+
 
 document.getElementById('openEditHoursModal').addEventListener('click', function() {
   document.getElementById('editHoursPasswordModal').style.display = 'flex';
@@ -4138,21 +6366,44 @@ document.getElementById('confirmEditHoursPasswordButton').addEventListener('clic
         document.getElementById('editHoursModal').style.display = 'none';
       });
       document.getElementById('confirmEditHours').addEventListener('click', function() {
-        let task = document.getElementById('editModalTask').value;
-        let selectedDay = document.getElementById('editModalSelectedDay').value;
-        let timeInput = document.getElementById('editModalDayPlanned').value;
-        let dayPlanned = convertHHMMToDecimal(timeInput);
-        if (!task || !selectedDay || dayPlanned === null) {
-          alert("Please fill in all fields with a valid time in HH:MM format.");
-          return;
-        }
-        let selectedDayFormatted = new Date(selectedDay).toLocaleDateString('en-GB');
-        plannedHoursTracker[task] = plannedHoursTracker[task] || {};
-        plannedHoursTracker[task][selectedDayFormatted] = dayPlanned;
-        localStorage.setItem('plannedHoursTracker', JSON.stringify(plannedHoursTracker));
-        document.getElementById('editHoursModal').style.display = 'none';
-        displayBudgetOverview();
-      });
+  let task = document.getElementById('editModalTask').value;
+  let selectedDay = document.getElementById('editModalSelectedDay').value;
+  let timeInputEl = document.getElementById('editModalDayPlanned');
+  let timeInput = timeInputEl.value;
+
+  let dayPlanned = convertHHMMToDecimal(timeInput);
+
+  if (!task || !selectedDay || dayPlanned === null) {
+    alert("Please fill in all fields with a valid time in HH:MM format.");
+    return;
+  }
+
+  // 1) Guarda exatamente como hoje
+  let selectedDayFormatted = new Date(selectedDay).toLocaleDateString('en-GB');
+  plannedHoursTracker[task] = plannedHoursTracker[task] || {};
+  plannedHoursTracker[task][selectedDayFormatted] = dayPlanned;
+
+  localStorage.setItem('plannedHoursTracker', JSON.stringify(plannedHoursTracker));
+
+  // 2) Atualiza a UI (igual ao comportamento atual)
+  displayBudgetOverview();
+
+  // 3) Pergunta se quer fazer mais ajustes
+  const doMore = window.confirm(
+    "Adjustment saved.\n\nDo you want to make more adjustments?"
+  );
+
+  if (doMore) {
+    // ✅ SIM: mantém o modal aberto e limpa o campo das horas
+    timeInputEl.value = '';
+    timeInputEl.focus();
+    timeInputEl.select();
+  } else {
+    // ❌ NÃO: fecha o modal como hoje
+    document.getElementById('editHoursModal').style.display = 'none';
+  }
+});
+
       document.getElementById('modalTaskFilter').addEventListener('input', function() {
         displayBudgetOverview();
       });
@@ -4184,32 +6435,193 @@ document.getElementById('employeeFilter').addEventListener('input', filterTable)
 document.getElementById('taskFilter').addEventListener('input', filterTable);
 document.getElementById('labourAccountFilter').addEventListener('input', filterTable);
 document.getElementById('payCodeFilter').addEventListener('change', filterTable);
-document.getElementById('dateFilter').addEventListener('change', filterTable);  // ← adicionada aqui
+document.getElementById('dateFilter').addEventListener('change', filterTable);
+
+// ✅ NOVO: listener OT > 40h (Week)
+const otPeopleEl = document.getElementById('otPeopleFilter');
+if (otPeopleEl) otPeopleEl.addEventListener('change', filterTable);
+
+
+// ================== NOVO: Painel Multi-Select de Pay Code ==================
+window.selectedPayCodes = window.selectedPayCodes || new Set();
+
+// Helper: pega todos os Pay Codes existentes (storedData → se não tiver, pega da tabela)
+function getAllPayCodes() {
+  const codes = new Set();
+
+  // 1) Fonte principal: storedData
+  if (Array.isArray(storedData)) {
+    storedData.forEach(e => {
+      const code = (e.payCode || '').trim();
+      if (code) codes.add(code);
+    });
+  }
+
+  // 2) Se por algum motivo não tiver nada, tenta ler da tabela Home
+  if (!codes.size) {
+    document.querySelectorAll('#resultTable tbody tr').forEach(row => {
+      const td = row.querySelector('td:nth-child(13)'); // ✅ Pay Code = 13ª coluna
+
+      if (!td) return;
+      const code = td.textContent.trim();
+      if (code) codes.add(code);
+    });
+  }
+
+  return Array.from(codes).sort();
+}
+
+// Preenche o corpo do painel (lista de checkboxes)
+function populatePayCodeMultiBody() {
+  const container = document.getElementById('payCodeMultiBody');
+  if (!container) return;
+
+  const codes    = getAllPayCodes();
+  const selected = window.selectedPayCodes || new Set();
+
+  container.innerHTML = '';
+
+  if (!codes.length) {
+    container.innerHTML =
+      '<div style="padding:4px; color:#888;">No Pay Codes found.</div>';
+    return;
+  }
+
+  codes.forEach(code => {
+    const codeLC = code.toLowerCase();
+    const id     = `pc_${code.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    const label = document.createElement('label');
+    label.style.display       = 'flex';
+    label.style.alignItems    = 'center';
+    label.style.gap           = '4px';
+    label.style.marginBottom  = '2px';
+
+    const cb   = document.createElement('input');
+    cb.type    = 'checkbox';
+    cb.value   = codeLC;
+    cb.id      = id;
+    if (selected.has(codeLC)) cb.checked = true;
+
+    const span = document.createElement('span');
+    span.textContent = code;
+
+    label.appendChild(cb);
+    label.appendChild(span);
+    container.appendChild(label);
+  });
+}
+
+// Ligações dos botões do painel
+const openPayCodePanelBtn = document.getElementById('openPayCodePanel');
+const payCodePanelEl      = document.getElementById('payCodeMultiPanel');
+const payCodeClearBtn     = document.getElementById('payCodeMultiClear');
+const payCodeCancelBtn    = document.getElementById('payCodeMultiCancel');
+const payCodeOkBtn        = document.getElementById('payCodeMultiOk');
+
+// Abrir / fechar painel ao clicar no botão "Pay Code ▾"
+if (openPayCodePanelBtn && payCodePanelEl) {
+  openPayCodePanelBtn.addEventListener('click', () => {
+    populatePayCodeMultiBody();
+    const isHidden =
+      payCodePanelEl.style.display === 'none' ||
+      payCodePanelEl.style.display === '';
+    payCodePanelEl.style.display = isHidden ? 'block' : 'none';
+  });
+}
+
+// Botão CLEAR → limpa selecção e aplica filtro (mostra todos Pay Codes)
+if (payCodeClearBtn) {
+  payCodeClearBtn.addEventListener('click', () => {
+    window.selectedPayCodes = new Set();
+    document
+      .querySelectorAll('#payCodeMultiBody input[type="checkbox"]')
+      .forEach(cb => cb.checked = false);
+
+    // limpa também o dropdown simples, para não confundir
+    const payCodeSelect = document.getElementById('payCodeFilter');
+    if (payCodeSelect) payCodeSelect.value = '';
+
+    filterTable();
+  });
+}
+
+// Botão CANCEL → só fecha, não altera nada
+if (payCodeCancelBtn && payCodePanelEl) {
+  payCodeCancelBtn.addEventListener('click', () => {
+    payCodePanelEl.style.display = 'none';
+  });
+}
+
+// Botão OK → lê checkboxes seleccionadas, grava e aplica filtro
+if (payCodeOkBtn && payCodePanelEl) {
+  payCodeOkBtn.addEventListener('click', () => {
+    const set = new Set();
+    document
+      .querySelectorAll('#payCodeMultiBody input[type="checkbox"]:checked')
+      .forEach(cb => {
+        set.add(cb.value.toLowerCase());
+      });
+
+    window.selectedPayCodes = set;
+
+    // Se usar multi-select, limpamos o dropdown "simples" para evitar conflito visual
+    if (set.size > 0) {
+      const payCodeSelect = document.getElementById('payCodeFilter');
+      if (payCodeSelect) payCodeSelect.value = '';
+    }
+
+    payCodePanelEl.style.display = 'none';
+    filterTable();
+  });
+}
+// ================== FIM BLOCO PAY CODE MULTI-SELECT ==================
+
+
+// 🔹 NOVO: filtro TYPE dinâmico
+const typeFilterEl = document.getElementById('typeFilter');
+if (typeFilterEl) {
+  typeFilterEl.addEventListener('change', filterTable);
+}
+
+
 document.getElementById('downloadBudgetReport').addEventListener('click', downloadBudgetReport);
 document.getElementById('toggleBudgetMode').addEventListener('click', () => {
   showBudgetTotal = !showBudgetTotal;   // inverte o modo
   renderDashboard();                    // redesenha KPI com o valor correcto
 });
 
-/* ★ novos listeners para a caixinha Missing Budgets */
-document.getElementById('showMissingBudgets').addEventListener('click', toggleMissingBudgetBox);
-document.getElementById('closeMissingBudgets').addEventListener('click', toggleMissingBudgetBox);
+
 
 populateDropdowns();
 
 
 
-      console.log('storedData ao iniciar:', storedData);
+if (storedData.length > 0) {
+  const inicial = aggregateData(storedData);
+  displayResults(inicial);
+  updateTotalHours(inicial);
+  updateFilteredTotals(inicial);
+  updateHeadcount();
+  updateMissingTaskCount();
+  displayBudgetOverview();
+  populateTypeDropdown();
 
-      if (storedData.length > 0) {
-        const inicial = aggregateData(storedData);
-        displayResults(inicial);
-        updateTotalHours(inicial);
-        updateFilteredTotals(inicial);
-        updateHeadcount();
-        updateMissingTaskCount();
-        displayBudgetOverview();
-      }
+  // 🔹 Recalcula tabela + cache de linhas visíveis
+  filterTable();
+
+  // 🔹 Garante que a label de Over Time é actualizada logo após o refresh
+  updateOvertimeLabel();
+
+  // ✅ NOVO: preenche o dropdown OT > 40h na inicialização
+  populateOTPeopleDropdown();
+} else {
+  // Se não houver dados no localStorage, inicializa a label de forma consistente
+  updateOvertimeLabel();
+
+  // (opcional) se quiser limpar dropdown quando não há dados:
+  // populateOTPeopleDropdown();
+}
 
      populatePayCodeDropdown();
 populateComparisonTaskFilters();
@@ -4253,31 +6665,68 @@ const btnClose = document.getElementById('closeMissingBudgets');
 
 /* 1. Tasks que têm budget e consumo 0 nos filtros atuais */
 function getMissingBudgetTasks() {
-  // tasks presentes no CSV depois dos filtros
+  // 1) Tasks que têm CONSUMO nos filtros actuais (Home + dept + week + month, etc.)
   const visibleTasks = new Set(
-    (currentDepartmentFilter === 'All' ? storedData : storedData.filter(
-      e => currentDepartmentFilter === 'Break'
-            ? (/break/i.test(e.task) || e.labourAccount.endsWith('4010'))
-            : e.department === currentDepartmentFilter
-    )).map(e => e.task)
+    getFilteredData().map(e => e.task)
   );
 
   const list = [];
+
+  const selectedWeek  = document.getElementById('selectWeek').value;
+  const selectedMonth = document.getElementById('selectMonth').value;
+
+  // 2) Percorre todas as tasks que têm budget
   Object.entries(plannedHoursTracker).forEach(([tsk, obj]) => {
-    if (typeof obj.budget !== 'number') return;      // sem budget
-    if (visibleTasks.has(tsk))        return;        // tem consumo
+    const budgets = obj.budgets || {};
+    if (!Object.keys(budgets).length) return;  // sem budget definido
 
-    // respeita filtro de departamento
-    if (currentDepartmentFilter === 'Ecom'   && !tsk.startsWith('E.')) return;
-    if (currentDepartmentFilter === 'Retail' && !tsk.startsWith('R.')) return;
-    if (currentDepartmentFilter === 'Break'  && !/break/i.test(tsk))   return;
+    // 3) Respeita filtro de departamento actual
+    if (currentDepartmentFilter === 'Ecom'   && !tsk.startsWith('E.'))      return;
+    if (currentDepartmentFilter === 'Retail' && !tsk.startsWith('R.'))      return;
+    if (currentDepartmentFilter === 'Break'  && !/break/i.test(tsk))        return;
+    // Se All → não precisa filtrar por prefixo
 
-    list.push({ task: tsk, hours: obj.budget });
+    let sumHours = 0;
+
+    Object.entries(budgets).forEach(([weekKey, dec]) => {
+      const wk = parseInt(weekKey, 10);
+      if (isNaN(wk)) return;
+
+      // filtro Week
+      if (selectedWeek && String(wk) !== selectedWeek) return;
+
+      // filtro Month (usa as datas diárias para ver o mês)
+      if (selectedMonth) {
+        let matchesMonth = false;
+        Object.keys(obj).forEach(dateStr => {
+          if (dateStr === 'budget' || dateStr === 'budgets') return;
+          const [d, m, y] = dateStr.split('/').map(Number);
+          if (getCustomWeekNumber(new Date(y, m - 1, d)) === wk) {
+            const monthName = new Date(y, m - 1, d)
+              .toLocaleString('default', { month: 'long' });
+            if (monthName === selectedMonth) matchesMonth = true;
+          }
+        });
+        if (!matchesMonth) return;
+      }
+
+      sumHours += dec;
+    });
+
+    // se não tem budget “activo” neste filtro, ignora
+    if (sumHours <= 0) return;
+
+    // Se a task aparece nos dados filtrados → tem consumo → não é "missing"
+    if (visibleTasks.has(tsk)) return;
+
+    list.push({ task: tsk, hours: sumHours });
   });
 
-  list.sort((a,b) => b.hours - a.hours);             // maior → menor
+  // 4) Ordena do maior budget para o menor
+  list.sort((a, b) => b.hours - a.hours);
   return list;
 }
+
 
 /* 2. Preenche a caixinha com a tabela */
 function populateMissingBudgetBox() {
@@ -4342,9 +6791,34 @@ btnClose.addEventListener('click', toggleMissingBudgetBox);
     box.classList.remove('grabbing');
   });
 })();
-/* ========================================================= */
 
 // ← fecha o DOMContentLoaded
+  
+/* =========================================================
+   🔒 Anti-curiosos (bloqueia atalhos comuns)
+   ========================================================= */
+(function blockDevShortcuts() {
+  // (Opcional) bloqueia botão direito
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+  }, true);
+
+  document.addEventListener('keydown', (e) => {
+    const key = String(e.key || '').toLowerCase();
+
+    const isCtrlU       = e.ctrlKey && !e.shiftKey && key === 'u';
+    const isCtrlShiftI  = e.ctrlKey &&  e.shiftKey && key === 'i';
+    const isCtrlShiftJ  = e.ctrlKey &&  e.shiftKey && key === 'j';
+    const isCtrlShiftC  = e.ctrlKey &&  e.shiftKey && key === 'c';
+    const isF12         = (e.key === 'F12') || (e.keyCode === 123);
+
+    if (isCtrlU || isCtrlShiftI || isCtrlShiftJ || isCtrlShiftC || isF12) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }, true);
+})();
   </script>
 </body>
 </html>
