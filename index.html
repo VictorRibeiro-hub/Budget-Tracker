@@ -1863,18 +1863,27 @@ let selectedRetailTasks = [];
 
     // formata segundos totais em "HH:MM:SS"
     function formatTime(totalSeconds) {
-      const hours     = Math.floor(totalSeconds / 3600);
-      const remainder = totalSeconds % 3600;
-      const minutes   = Math.floor(remainder / 60);
-      const seconds   = remainder % 60;
-      const hh = String(hours).padStart(2, '0');
-      const mm = String(minutes).padStart(2, '0');
-      const ss = String(seconds).padStart(2, '0');
-      return `${hh}:${mm}:${ss}`;
-    }
+  // ✅ Blindagem contra floats (ex.: 65160.00000000001)
+  const sec = Math.round(Number(totalSeconds) || 0);
+
+  const hours     = Math.floor(sec / 3600);
+  const remainder = sec % 3600;
+  const minutes   = Math.floor(remainder / 60);
+  const seconds   = remainder % 60;
+
+  const hh = String(hours).padStart(2, '0');
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+
+  return `${hh}:${mm}:${ss}`;
+}
+
     function formatTimeHHMM(totalSeconds) {
+  totalSeconds = Math.round(Number(totalSeconds) || 0); // ✅ trava floats
+
   const hours   = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
+
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
@@ -1882,9 +1891,10 @@ let selectedRetailTasks = [];
 //      -240 seg  -> "-00:04:00"
 function formatSignedTime(seconds) {
   const sign = seconds < 0 ? '-' : '+';
-  const abs  = Math.abs(seconds);
+  const abs  = Math.round(Math.abs(Number(seconds) || 0)); // ✅ trava floats
   return sign + formatTime(abs);
 }
+
 
 
     const managersList = [
@@ -2248,7 +2258,7 @@ let dataRetail = baseData.filter(e => e.department === "Retail");
 
             if (!(key in plannedByDay)) {
               const plannedDec = (plannedHoursTracker[e.task] || {})[e.date];
-              plannedByDay[key] = plannedDec != null ? plannedDec * 3600 : 0;
+              plannedByDay[key] = plannedDec != null ? Math.round(plannedDec * 3600) : 0;
             }
           });
 
@@ -2396,23 +2406,80 @@ if (selectedDay) {
 
 
   // 3) agrupa por dia
-  const byDay = {};
-  data.forEach(e => {
-    byDay[e.date] = byDay[e.date] || { consumed: 0, planned: 0 };
-    const [h, m, s] = e.totalHoursFormatted.split(':').map(Number);
-    byDay[e.date].consumed += h * 3600 + m * 60 + s;
-    const pd = (plannedHoursTracker[task] || {})[e.date] || 0;
-    byDay[e.date].planned   = pd * 3600;
-  });
+const byDay = {};
+data.forEach(e => {
+  byDay[e.date] = byDay[e.date] || { consumed: 0, planned: 0 };
+  const [h, m, s] = e.totalHoursFormatted.split(':').map(Number);
+  byDay[e.date].consumed += h * 3600 + m * 60 + s;
+  const pd = (plannedHoursTracker[task] || {})[e.date] || 0;
+byDay[e.date].planned   = Math.round(pd * 3600);
+});
 
-  // 4) prepara arrays de labels e valores
-  const labels = Object.keys(byDay).sort((a, b) => {
-    const [da, ma, ya] = a.split('/').map(Number);
-    const [db, mb, yb] = b.split('/').map(Number);
-    return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
-  });
-  const consumed = labels.map(d => byDay[d].consumed / 3600);
-  const planned  = labels.map(d => byDay[d].planned / 3600);
+// 4) prepara arrays de labels e valores
+const labels = Object.keys(byDay).sort((a, b) => {
+  const [da, ma, ya] = a.split('/').map(Number);
+  const [db, mb, yb] = b.split('/').map(Number);
+  return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+});
+
+/* =========================================================
+   ✅ NOVO: KPIs dinâmicos no topo do Daily Detail
+   - Consumed total
+   - Planned total
+   - Diff com setas (verde/vermelho)
+   ========================================================= */
+let totalConsumedSec = 0;
+let totalPlannedSec  = 0;
+
+labels.forEach(d => {
+  totalConsumedSec += (byDay[d]?.consumed || 0);
+  totalPlannedSec  += (byDay[d]?.planned  || 0);
+});
+
+const diffSec = totalConsumedSec - totalPlannedSec;
+
+const diffArrow = diffSec > 0 ? '▼ ' : diffSec < 0 ? '▲ ' : '';
+const diffSign  = diffSec > 0 ? '-'  : diffSec < 0 ? '+'  : '';
+const diffColor = diffSec > 0 ? '#c1121f' : diffSec < 0 ? '#26a269' : '#777';
+
+const consumedTxt = formatTimeHHMM(totalConsumedSec);
+const plannedTxt  = formatTimeHHMM(totalPlannedSec);
+const diffTxt     = diffSec === 0
+  ? '— 00:00'
+  : `${diffArrow}${diffSign}${formatTimeHHMM(Math.abs(diffSec))}`;
+
+// Cria (uma vez) a linha de KPIs logo abaixo do título
+const titleEl = document.getElementById('dailyDetailTitle');
+if (titleEl && titleEl.parentElement) {
+  let kpiRow = document.getElementById('dailyDetailKpiRow');
+
+  if (!kpiRow) {
+    kpiRow = document.createElement('div');
+    kpiRow.id = 'dailyDetailKpiRow';
+
+    // estilo leve, sem estragar layout
+    kpiRow.style.display = 'flex';
+    kpiRow.style.gap = '14px';
+    kpiRow.style.marginTop = '6px';
+    kpiRow.style.alignItems = 'center';
+    kpiRow.style.justifyContent = 'flex-start';
+    kpiRow.style.fontSize = '0.95rem';
+
+    titleEl.insertAdjacentElement('afterend', kpiRow);
+  }
+
+  kpiRow.innerHTML = `
+    <span style="color:#555;"><b>Consumed:</b> ${consumedTxt}</span>
+    <span style="color:#555;"><b>Planned:</b> ${plannedTxt}</span>
+    <span style="color:${diffColor}; font-weight:700;"><b>Diff:</b> ${diffTxt}</span>
+  `;
+}
+/* ====================== FIM KPIs ======================= */
+
+// (continua como já estava)
+const consumed = labels.map(d => byDay[d].consumed / 3600);
+const planned  = labels.map(d => byDay[d].planned  / 3600);
+
 
   // 5) renderiza no canvas
   const ctx = document.getElementById('dailyDetailChart').getContext('2d');
@@ -3034,7 +3101,7 @@ if (aggregatedDataFiltered.length) {
       sumConsumed += consumedSec;
       // planned por dia
       const pd = plannedHoursTracker[tsk]?.[dateKey];
-      if (pd != null) sumPlannedSeconds += pd * 3600;
+      if (pd != null) sumPlannedSeconds += Math.round(pd * 3600);
     });
   });
 
@@ -3150,8 +3217,9 @@ Object.keys(overview)
       weekConsumedSec  += consumedSec;                // acumula
 
       const plannedDec  = (plannedHoursTracker[tsk] || {})[dateKey] || 0;
-      const plannedSec  = plannedDec * 3600;
+      const plannedSec  = Math.round(plannedDec * 3600);
       const diffDaySec  = consumedSec - plannedSec;
+
 
       // Consumed
       const tdC = document.createElement('td');
@@ -3242,16 +3310,104 @@ const otPersonFilter = otPeopleEl ? otPeopleEl.value.trim() : '';
 
 const rows = document.querySelectorAll('#resultTable tbody tr');
 
+// =======================
+// Helper: aplica TODOS os filtros atuais,
+// mas IGNORA o próprio modo OT>40 (Week)
+// =======================
+function passesFiltersExcludingOT(cells) {
+  const employeeText      = (cells[0]?.textContent || '').toLowerCase();
+  const typeText          = (cells[1]?.textContent || '').toLowerCase();
+  const personNumber      = (cells[2]?.textContent || '').trim();
+  const roleText          = (cells[3]?.textContent || '').trim();
+  const dateText          = (cells[4]?.textContent || '').trim();
+  const weekText          = (cells[5]?.textContent || '').trim();
+  const monthText         = (cells[6]?.textContent || '').trim();
+  const labourAccountText = (cells[7]?.textContent || '').toLowerCase();
+  const departmentText    = (cells[8]?.textContent || '').trim();
+  const taskText          = (cells[9]?.textContent || '').trim();
+  const taskTextLC        = taskText.toLowerCase();
+  const payCodeText       = (cells[12]?.textContent || '').toLowerCase();
+
+  // Task multi-filter
+  const matchesTask =
+    taskFilters.length === 0 ||
+    taskFilters.some(f => taskTextLC.includes(f));
+
+  let show =
+    employeeText.includes(employeeFilter) &&
+    labourAccountText.includes(labourAccountFilter) &&
+    matchesTask;
+
+  // Type
+  if (typeFilter && !typeText.includes(typeFilter)) show = false;
+
+  // Pay Code (dropdown + multi)
+  let passesPayCode = true;
+
+  if (payCodeFilter && payCodeText !== payCodeFilter) {
+    passesPayCode = false;
+  }
+
+  if (window.selectedPayCodes && window.selectedPayCodes.size > 0) {
+    if (!window.selectedPayCodes.has(payCodeText)) {
+      passesPayCode = false;
+    }
+  }
+
+  if (!passesPayCode) show = false;
+
+  // Week / Month
+  if (weekFilter  && weekText  !== weekFilter)  show = false;
+  if (monthFilter && monthText !== monthFilter) show = false;
+
+  // Department slicer
+  if (currentDepartmentFilter && currentDepartmentFilter !== 'All') {
+    if (currentDepartmentFilter === 'Break') {
+      const labourDigits = String(cells[7]?.textContent || '').replace(/\D/g, '');
+      const taskLC2      = String(cells[9]?.textContent || '').toLowerCase();
+
+      const isBreakRow =
+        labourDigits.endsWith('4010') ||
+        /-4010\b/.test(taskLC2) ||
+        taskLC2.includes('paid break');
+
+      if (!isBreakRow) show = false;
+    } else {
+      if (departmentText !== currentDepartmentFilter) show = false;
+    }
+  }
+
+  // codeFilter (manager/operative/missingTask) continua válido aqui
+  if (codeFilter === 'manager'     && roleText !== 'Manager')   show = false;
+  if (codeFilter === 'operative'   && roleText !== 'Operative') show = false;
+  if (codeFilter === 'missingTask' && !taskText.endsWith('Missing Task-0000')) show = false;
+
+  // Date (ISO)
+  if (dateFilter) {
+    const [d, m, y] = dateText.split('/');
+    const isoDate = `${y}-${String(m||'').padStart(2,'0')}-${String(d||'').padStart(2,'0')}`;
+    if (isoDate !== dateFilter) show = false;
+  }
+
+  // precisa pelo menos ter person/week para ser útil (senão nem conta)
+  if (!personNumber || !weekText) show = false;
+
+  return show;
+}
 
   // ─────────────────────────────────────────────
-// 1) Somar horas base de OT
-const weeklyTotals       = {}; // AGY: chave person|week -> segundos semana
-const dailyTotalsCore    = {}; // CORE: chave person|week|date -> segundos dia
+// 1) Somar horas base de OT (CORE + AGY: semanal > 40h)
+const weeklyTotals = {}; // TODOS: chave person|week -> segundos semana
 
 rows.forEach(row => {
   const cells = row.getElementsByTagName('td');
   if (!cells.length) return;
 
+  // ✅ NOVO: só soma para o dataset que passa os filtros (PayCode/Task/Dept/etc)
+  // (ignorando apenas o próprio modo OT>40)
+  if (!passesFiltersExcludingOT(cells)) return;
+
+  // Mantemos as leituras originais (não atrapalha nada e evita surpresas)
   const typeText     = cells[1].textContent.trim().toLowerCase();
   const personNumber = cells[2].textContent.trim();
   const dateText     = cells[4].textContent.trim();  // DD/MM/YYYY
@@ -3264,38 +3420,24 @@ rows.forEach(row => {
   const [h = 0, m = 0, s = 0] = hoursText.split(':').map(Number);
   const secs = h * 3600 + m * 60 + s;
 
-  const isCore = (typeText === 'core');
-
-  if (isCore) {
-    const keyDay = `${personNumber}|${weekText}|${dateText}`;
-    dailyTotalsCore[keyDay] = (dailyTotalsCore[keyDay] || 0) + secs;
-  } else {
-    const keyWeek = `${personNumber}|${weekText}`;
-    weeklyTotals[keyWeek] = (weeklyTotals[keyWeek] || 0) + secs;
-  }
+  // ✅ agora TODOS entram na regra semanal
+  const keyWeek = `${personNumber}|${weekText}`;
+  weeklyTotals[keyWeek] = (weeklyTotals[keyWeek] || 0) + secs;
 });
 
-  // ─────────────────────────────────────────────
-  // 1.1) Quanto de OT existe em cada linha
-  //      - CORE  → acima de 8h/dia
-  //      - AGY   → acima de 40h/semana
-  // ─────────────────────────────────────────────
-  const overtimeByRow = new Map();  // row → segundos de OT nesta linha
+// ─────────────────────────────────────────────
+// 1.1) Quanto de OT existe em cada linha
+//      - TODOS → acima de 40h/semana
+// ─────────────────────────────────────────────
+const overtimeByRow = new Map();  // row → segundos de OT nesta linha
 
 // ✅ calcula SEMPRE (para podermos usar no rótulo OT mesmo sem filtro "overtime")
-const overtimeRemainingWeek = {}; // AGY: person|week   → OT por distribuir
-const overtimeRemainingCore = {}; // CORE: person|week|date → OT por distribuir
+const overtimeRemainingWeek = {}; // TODOS: person|week → OT por distribuir
 
-// AGY / outros: OT semanal > 40h
+// OT semanal > 40h (para TODOS)
 Object.entries(weeklyTotals).forEach(([key, totalSec]) => {
   const otSec = Math.max(0, totalSec - 40 * 3600);
   overtimeRemainingWeek[key] = otSec;
-});
-
-// CORE: OT diária > 8h
-Object.entries(dailyTotalsCore).forEach(([key, totalSec]) => {
-  const otSec = Math.max(0, totalSec - 8 * 3600);
-  overtimeRemainingCore[key] = otSec;
 });
 
 // distribui OT pelas linhas na mesma ordem
@@ -3303,6 +3445,14 @@ rows.forEach(row => {
   const cells = row.getElementsByTagName('td');
   if (!cells.length) return;
 
+  // ✅ NOVO: linhas fora do recorte filtrado NÃO participam no OT
+  // e recebem OT=0 (para não contaminar o filtro OT>40 e nem o label)
+  if (!passesFiltersExcludingOT(cells)) {
+    overtimeByRow.set(row, 0);
+    return;
+  }
+
+  // Mantemos leituras originais (não muda layout nem filtros)
   const typeText     = cells[1].textContent.trim().toLowerCase();
   const personNumber = cells[2].textContent.trim();
   const dateText     = cells[4].textContent.trim();
@@ -3317,29 +3467,22 @@ rows.forEach(row => {
 
   let otThisRow = 0;
 
-  if (typeText === 'core') {
-    const keyDay = `${personNumber}|${weekText}|${dateText}`;
-    const otLeft = overtimeRemainingCore[keyDay] || 0;
+  // ✅ agora é sempre semanal (CORE + AGY)
+  const keyWeek = `${personNumber}|${weekText}`;
+  const otLeft  = overtimeRemainingWeek[keyWeek] || 0;
 
-    if (otLeft > 0) {
-      otThisRow = Math.min(secsRow, otLeft);
-      overtimeRemainingCore[keyDay] = otLeft - otThisRow;
-    }
-  } else {
-    const keyWeek = `${personNumber}|${weekText}`;
-    const otLeft  = overtimeRemainingWeek[keyWeek] || 0;
-
-    if (otLeft > 0) {
-      otThisRow = Math.min(secsRow, otLeft);
-      overtimeRemainingWeek[keyWeek] = otLeft - otThisRow;
-    }
+  if (otLeft > 0) {
+    otThisRow = Math.min(secsRow, otLeft);
+    overtimeRemainingWeek[keyWeek] = otLeft - otThisRow;
   }
 
   overtimeByRow.set(row, otThisRow);
 });
 
+
 // ✅ deixa acessível para o updateOvertimeLabel()
 window.overtimeByRow = overtimeByRow;
+
 // ✅ NOVO: Set de pessoas com OT por semana (person|week)
 const otPersonWeekSet = new Set();
 
@@ -3357,6 +3500,7 @@ rows.forEach(row => {
 
   otPersonWeekSet.add(`${personNumber}|${weekText}`);
 });
+
 
 
   // ─────────────────────────────────────────────
@@ -3597,9 +3741,9 @@ if (document.getElementById('dashboard').classList.contains('active')) {
 // Dashboard para que os KPI e gráficos reflitam exactamente o que o
 // utilizador está a ver na aba Home.
 function getFilteredData() {
-  return (window.filteredRowsCache && window.filteredRowsCache.length)
-           ? window.filteredRowsCache
-           : storedData;
+  return Array.isArray(window.filteredRowsCache)
+    ? window.filteredRowsCache
+    : (storedData || []);
 }
 // ==================================================================
 
@@ -3807,42 +3951,28 @@ function computeOvertimeFromEntries(baseSource, allEntries) {
   });
 
   // 2) soma das horas:
-  //    - por semana (para AGY: 40h/sem)
-  //    - por dia (para CORE: 8h/dia)
-  const weeklyTotals    = {};   // person|week       -> totalSegundosNaSemana
-  const dailyTotalsCore = {};   // person|week|date  -> totalSegundosNoDia (apenas CORE)
+//    - por semana (CORE + AGY: 40h/sem)
+const weeklyTotals = {};   // person|week -> totalSegundosNaSemana
 
-  allEntries.forEach(e => {
-    const person = e.personNumber;
-    const week   = e.week;
-    const date   = e.date;              // "DD/MM/YYYY"
-    if (!person || !week || !date) return;
+allEntries.forEach(e => {
+  const person = e.personNumber;
+  const week   = e.week;
+  const date   = e.date;              // mantém se for usado noutros sítios
+  if (!person || !week || !date) return;
 
-    const key = `${person}|${week}`;
-    if (!allowedKeys.has(key)) return;  // só semanas/pessoas dentro do filtro
+  const key = `${person}|${week}`;
+  if (!allowedKeys.has(key)) return;  // só semanas/pessoas dentro do filtro
 
-    const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
-    if (!time || time === 'N/A') return;
+  const time = e.totalHoursFormatted || e.totalHours || '00:00:00';
+  if (!time || time === 'N/A') return;
 
-    const [h = 0, m = 0, s = 0] = time.split(':').map(Number);
-    const sec = h * 3600 + m * 60 + s;
+  const [h = 0, m = 0, s = 0] = time.split(':').map(Number);
+  const sec = h * 3600 + m * 60 + s;
 
-    // total da semana (usado para AGY e p/ total de horas)
-    weeklyTotals[key] = (weeklyTotals[key] || 0) + sec;
+  // ✅ total da semana (para TODOS)
+  weeklyTotals[key] = (weeklyTotals[key] || 0) + sec;
+});
 
-    // descobrir se é CORE ou AGY para este person|week
-    const typeLC = (typeByKey[key] || '').toLowerCase();
-    const isAgency =
-      typeLC.includes('agy') ||
-      typeLC.includes('247') ||
-      typeLC.includes('extr');
-
-    // para CORE, guardamos também o total por dia
-    if (!isAgency) {
-      const dayKey = `${person}|${week}|${date}`;
-      dailyTotalsCore[dayKey] = (dailyTotalsCore[dayKey] || 0) + sec;
-    }
-  });
 
   // 3) Aplica regras de OT
   let overtimeTotalSec = 0;
@@ -3853,30 +3983,16 @@ function computeOvertimeFromEntries(baseSource, allEntries) {
     baseTotalSec += totalSec;
   });
 
-  // 3.2) OT de AGY → semanal acima de 40h
-  Object.entries(weeklyTotals).forEach(([key, totalSec]) => {
-    const typeLC = (typeByKey[key] || '').toLowerCase();
-    const isAgency =
-      typeLC.includes('agy') ||
-      typeLC.includes('247') ||
-      typeLC.includes('extr');
+  // 3.3) OT (CORE + AGY) → semanal acima de 40h
+Object.values(weeklyTotals).forEach(totalWeekSec => {
+  const baseSecWeek = 40 * 3600;
+  const overSecWeek = Math.max(0, totalWeekSec - baseSecWeek);
+  overtimeTotalSec += overSecWeek;
+});
 
-    if (!isAgency) return;
-
-    const baseSec = 40 * 3600;
-    const overSec = Math.max(0, totalSec - baseSec);
-    overtimeTotalSec += overSec;
-  });
-
-  // 3.3) OT de CORE → diária acima de 8h em cada dia
-  Object.values(dailyTotalsCore).forEach(totalDaySec => {
-    const baseSecDay = 8 * 3600;
-    const overSecDay = Math.max(0, totalDaySec - baseSecDay);
-    overtimeTotalSec += overSecDay;
-  });
-
-  return { overtimeTotalSec, baseTotalSec };
+return { overtimeTotalSec, baseTotalSec };
 }
+
 
 // ★ NOVO – calcula "Over Spending" só para Break:
 //    - baseSource = dados filtrados (normalmente só Break quando estás no slicer Break)
@@ -4063,10 +4179,9 @@ function updateOvertimeLabel() {
   }
 
   // 1) Fonte base → linhas actualmente visíveis (Home + Dept + Week + Month + Date, etc.)
-  const baseSource =
-    (window.filteredRowsCache && window.filteredRowsCache.length)
-      ? window.filteredRowsCache
-      : storedData;
+  const baseSource = Array.isArray(window.filteredRowsCache)
+  ? window.filteredRowsCache
+  : (storedData || []);
 
   if (!baseSource.length) {
     let overtimeEl =
@@ -4478,70 +4593,46 @@ function applyExcel1904(wb) {
   wsDetail['!cols'] = detCols;
 
   // =====================================================================
-  //  CÁLCULO DE OT POR LINHA (CORE 8h/dia, AGY 40h/semana)
-  // =====================================================================
-  const rowCount   = filteredData.length;
-  const otPerRow   = new Array(rowCount).fill(0);   // em segundos
-  const secPerRow  = new Array(rowCount).fill(0);   // em segundos
+//  CÁLCULO DE OT POR LINHA (CORE + AGY: 40h/semana)
+// =====================================================================
+const rowCount   = filteredData.length;
+const otPerRow   = new Array(rowCount).fill(0);   // em segundos
+const secPerRow  = new Array(rowCount).fill(0);   // em segundos
 
-  const perPersonWeekDay = {}; // chave: person|week|date
-  const perPersonWeek    = {}; // chave: person|week
+const perPersonWeek = {}; // chave: person|week
 
-  filteredData.forEach((entry, idx) => {
-    const secs = parseTimeToSeconds(entry.totalHoursFormatted);
-    secPerRow[idx] = secs;
+filteredData.forEach((entry, idx) => {
+  const secs = parseTimeToSeconds(entry.totalHoursFormatted);
+  secPerRow[idx] = secs;
 
-    const person  = entry.personNumber || '';
-    const weekStr = String(entry.week || '');
-    const dateStr = entry.date;
-    if (!person || !weekStr || !dateStr || secs <= 0) return;
+  const person  = entry.personNumber || '';
+  const weekStr = String(entry.week || '');
+  const dateStr = entry.date;
+  if (!person || !weekStr || !dateStr || secs <= 0) return;
 
-    const group = getEmployeeGroup(entry.employee);
+  const group = getEmployeeGroup(entry.employee);
 
-    // --- agregação diária (CORE: 8h/dia) ---
-    const keyDay = `${person}|${weekStr}|${dateStr}`;
-    if (!perPersonWeekDay[keyDay]) {
-      perPersonWeekDay[keyDay] = { totalSec: 0, rows: [], group };
-    }
-    perPersonWeekDay[keyDay].totalSec += secs;
-    perPersonWeekDay[keyDay].rows.push({ idx, secs });
+  // --- agregação semanal (CORE + AGY: 40h/semana) ---
+  const keyWeek = `${person}|${weekStr}`;
+  if (!perPersonWeek[keyWeek]) {
+    perPersonWeek[keyWeek] = { totalSec: 0, rows: [], group };
+  }
+  perPersonWeek[keyWeek].totalSec += secs;
+  perPersonWeek[keyWeek].rows.push({ idx, secs, dateStr });
+});
 
-    // --- agregação semanal (AGY: 40h/semana) ---
-    const keyWeek = `${person}|${weekStr}`;
-    if (!perPersonWeek[keyWeek]) {
-      perPersonWeek[keyWeek] = { totalSec: 0, rows: [], group };
-    }
-    perPersonWeek[keyWeek].totalSec += secs;
-    perPersonWeek[keyWeek].rows.push({ idx, secs, dateStr });
-  });
+// ---- OT (CORE + AGY): acima de 40h/semana -----------------
+Object.values(perPersonWeek).forEach(groupObj => {
+  let otLeft = Math.max(0, groupObj.totalSec - 40 * 3600);
+  if (otLeft <= 0) return;
 
-  // ---- CORE: OT acima de 8h/dia -----------------------------
-  Object.values(perPersonWeekDay).forEach(groupObj => {
-    if (groupObj.group !== 'CORE') return;
-    let otLeft = Math.max(0, groupObj.totalSec - 8 * 3600);
-    if (otLeft <= 0) return;
-
-    for (const row of groupObj.rows) {
-      if (otLeft <= 0) break;
-      const portion = Math.min(row.secs, otLeft);
-      otPerRow[row.idx] += portion;
-      otLeft -= portion;
-    }
-  });
-
-  // ---- AGY: OT acima de 40h/semana --------------------------
-  Object.values(perPersonWeek).forEach(groupObj => {
-    if (groupObj.group === 'CORE') return; // só AGY
-    let otLeft = Math.max(0, groupObj.totalSec - 40 * 3600);
-    if (otLeft <= 0) return;
-
-    for (const row of groupObj.rows) {
-      if (otLeft <= 0) break;
-      const portion = Math.min(row.secs, otLeft);
-      otPerRow[row.idx] += portion;
-      otLeft -= portion;
-    }
-  });
+  for (const row of groupObj.rows) {
+    if (otLeft <= 0) break;
+    const portion = Math.min(row.secs, otLeft);
+    otPerRow[row.idx] += portion;
+    otLeft -= portion;
+  }
+});
 
   // =====================================================================
   //  AGREGADOS: POR PESSOA, POR DEPARTAMENTO, POR TASK
@@ -6793,32 +6884,6 @@ btnClose.addEventListener('click', toggleMissingBudgetBox);
 })();
 
 // ← fecha o DOMContentLoaded
-  
-/* =========================================================
-   🔒 Anti-curiosos (bloqueia atalhos comuns)
-   ========================================================= */
-(function blockDevShortcuts() {
-  // (Opcional) bloqueia botão direito
-  document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-  }, true);
-
-  document.addEventListener('keydown', (e) => {
-    const key = String(e.key || '').toLowerCase();
-
-    const isCtrlU       = e.ctrlKey && !e.shiftKey && key === 'u';
-    const isCtrlShiftI  = e.ctrlKey &&  e.shiftKey && key === 'i';
-    const isCtrlShiftJ  = e.ctrlKey &&  e.shiftKey && key === 'j';
-    const isCtrlShiftC  = e.ctrlKey &&  e.shiftKey && key === 'c';
-    const isF12         = (e.key === 'F12') || (e.keyCode === 123);
-
-    if (isCtrlU || isCtrlShiftI || isCtrlShiftJ || isCtrlShiftC || isF12) {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }
-  }, true);
-})();
-  </script>
+</script>
 </body>
 </html>
