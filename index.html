@@ -1647,7 +1647,7 @@ th, td {
 
     <!-- 1) Seletor de Semana -->
     <div style="margin-bottom: 12px;">
-      <label for="modalWeekNumber">Semana nº:</label>
+      <label for="modalWeekNumber">Week nº:</label>
       <input type="number" id="modalWeekNumber" min="1" max="53"
              style="width: 60px; padding:4px; margin-left:6px;">
     </div>
@@ -7530,9 +7530,29 @@ function populateDropdowns() {
   const monthDropdown = document.getElementById('selectMonth');
   const dateDropdown  = document.getElementById('dateFilter');
 
-  const weeks  = [...new Set(storedData.map(entry => entry.week))];
-  const months = [...new Set(storedData.map(entry => entry.month))];
-  const dates  = [...new Set(storedData.map(entry => entry.date))];
+  const weeks = [...new Set((storedData || [])
+    .map(e => String(e.week || '').trim())
+    .filter(Boolean)
+  )].sort((a, b) => {
+    const na = parseInt(a.replace(/\D/g, ''), 10);
+    const nb = parseInt(b.replace(/\D/g, ''), 10);
+
+    // ordena por número quando possível
+    if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+
+    // fallback (se algum valor não for numérico)
+    return String(a).localeCompare(String(b));
+  });
+
+  const months = [...new Set((storedData || [])
+    .map(entry => String(entry.month || '').trim())
+    .filter(Boolean)
+  )];
+
+  const dates  = [...new Set((storedData || [])
+    .map(entry => String(entry.date || '').trim())
+    .filter(Boolean)
+  )];
 
   // Preenche Week
   weekDropdown.innerHTML = '<option value="">Select Week</option>';
@@ -7582,7 +7602,6 @@ function populateDropdowns() {
     }
   });
 }
-
   window.renderDashboard = function () {
     let totalConsumedSec    = 0;
     let totalPlannedSec     = 0;
@@ -7668,28 +7687,7 @@ dashboardData.forEach(e => {
   }
 });
 
-// 2) soma também os planned em dias SEM consumo, mas só para as mesmas tasks/semana
-const visibleTasks = new Set(dashboardData.map(e => e.task));
-Object.keys(consumedPerWeekSec).forEach(wk => {
-  Object.entries(plannedHoursTracker).forEach(([tsk, datesObj]) => {
-    if (!visibleTasks.has(tsk)) return;
-    Object.entries(datesObj).forEach(([dateKey, dec]) => {
-      if (dateKey === 'budget' || dateKey === 'budgets') return;
 
-      const [d, m, y] = dateKey.split('/').map(Number);
-      if (getCustomWeekNumber(new Date(y, m - 1, d)) === Number(wk)) {
-        const key2 = `${tsk}|${dateKey}`;
-        if (!alreadyCounted.has(key2)) {
-          const sec = Math.round(dec * 3600);
-          totalPlannedSec += sec;
-          plannedPerWeekSec[wk] = (plannedPerWeekSec[wk] || 0) + sec;
-          alreadyCounted.add(key2);
-        }
-      }
-    });
-  });
-});
-/* ↑ FIM filtro dept planned ↑ */
 
 document.getElementById('kpiConsumed').textContent    = formatTime(totalConsumedSec);
 document.getElementById('kpiPlanned').textContent     = formatTimeHHMM(totalPlannedSec);
@@ -10092,3 +10090,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
